@@ -1,0 +1,13 @@
+[package]
+name = "paw-kafka-topic-backup"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.47.1", features = ["full"] }
+axum = "0.8.4"
+prometheus = "0.14.0"
+log4rs = "1.4.0"
+log = "0.4.28"
+sqlx-postgres = "0.8.6"
+rdkafka = "0.38.0"

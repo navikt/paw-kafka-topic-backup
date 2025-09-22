@@ -1,0 +1,42 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: paw-kafka-topic-backup
+  namespace: paw
+  labels:
+    team: paw
+spec:
+  image: {{ image }}
+  port: 8080
+  replicas:
+    min: 1
+    max: 1
+  liveness:
+    path: /internal/isAlive
+    initialDelay: 10
+  readiness:
+    path: /internal/isReady
+    initialDelay: 10
+  startup:
+    failureThreshold: 10
+    initialDelay: 2
+    path: /internal/isStarted
+    periodSeconds: 10
+    timeout: 5
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  kafka:
+    pool: {{ kafka }}
+  resources:
+    limits:
+      memory: 64Mi
+    requests:
+      memory: 32Mi
+      cpu: 5m
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_17
+        tier: db-f1-micro
+        databases:
+          - name: topicbackup

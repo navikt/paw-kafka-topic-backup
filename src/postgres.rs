@@ -25,7 +25,7 @@ impl std::fmt::Debug for DatabaseConfig {
         f.debug_struct("DatabaseConfig")
             .field("ip", &self.ip)
             .field("port", &self.port)
-            .field("user", &self.user)
+            .field("username", &self.user)
             .field("password", &"********")
             .field("db_name", &self.db_name)
             .field("pg_ssl_cert_path", &self.pg_ssl_cert_path)

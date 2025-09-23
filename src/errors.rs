@@ -1,8 +1,6 @@
 use std::fmt;
 use std::error::Error;
 
-type Result<T> = std::result::Result<T, AppError>;
-
 #[derive(Debug, Clone)]
 pub struct AppError {
     pub domain: AppDomain,

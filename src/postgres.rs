@@ -1,6 +1,6 @@
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
-use crate::DatabaseConfig::DatabaseConfig;
+use crate::database_config::DatabaseConfig;
 use crate::errors::{AppDomain, AppError};
 
 pub fn get_pg_pool(config: &DatabaseConfig) -> Result<PgPool, AppError> {

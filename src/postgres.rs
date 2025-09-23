@@ -40,7 +40,7 @@ pub fn get_database_config() -> Result<DatabaseConfig, ConfigError> {
         ip: get_db_env("HOST")?,
         port: get_db_env("PORT")?.parse()
             .map_err(|_| ConfigError { variable_name: "PORT".to_string() })?,
-        user: get_db_env("USER")?,
+        user: get_db_env("USERNAME")?,
         password: get_db_env("PASSWORD")?,
         db_name: get_db_env("DATABASE")?,
         pg_ssl_cert_path: get_db_env("SSLCERT")?,

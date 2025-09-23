@@ -7,6 +7,7 @@ mod errors;
 use crate::app_state::AppState;
 use crate::nais_http_apis::register_nais_http_apis;
 use log::info;
+use log::error;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::task;
 use crate::logging::init_log;
@@ -23,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match database_config {
         Ok(config) => info!("Database config: {:?}", config),
         Err(e) => {
-            eprintln!("Error getting database config: {:?}", e);
+            error!("Error getting database config: {:?}", e);
         }
     }
     task::spawn(register_nais_http_apis(app_state));

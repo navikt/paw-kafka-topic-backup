@@ -4,6 +4,8 @@ mod nais_http_apis;
 mod postgres;
 mod errors;
 
+use std::error::Error;
+use std::process::exit;
 use crate::app_state::AppState;
 use crate::nais_http_apis::register_nais_http_apis;
 use log::info;
@@ -20,21 +22,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         is_ready: true,
         has_started: true,
     };
-    let database_config = postgres::get_database_config();
-    match database_config {
-        Ok(config) => info!("Database config: {:?}", config),
-        Err(e) => {
-            error!("Error getting database config: {:?}", e);
-        }
-    }
+    let db_config = postgres::get_database_config()?;
     task::spawn(register_nais_http_apis(app_state));
     info!("HTTP server startet");
 
     let mut term_signal = signal(SignalKind::terminate())?;
     let mut interrupt_signal = signal(SignalKind::interrupt())?;
     tokio::select! {
-        _ = term_signal.recv() => {println!("\nSIGTERM mottatt, avslutter...");},
-        _ = interrupt_signal.recv() => {println!("\nSIGINT mottatt, avslutter...");},
+        _ = term_signal.recv() => {info!("\nSIGTERM mottatt, avslutter...");},
+        _ = interrupt_signal.recv() => {info!("\nSIGINT mottatt, avslutter...");},
     }
     Ok(())
 }

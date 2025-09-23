@@ -23,9 +23,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         has_started: true,
     };
     let db_config = postgres::get_database_config()?;
+    info!("Database config: {:?}", db_config);
     task::spawn(register_nais_http_apis(app_state));
     info!("HTTP server startet");
-
+    let pg_pool = postgres::get_pg_pool(&db_config)?;
+    info!("Postgres pool opprettet");
     let mut term_signal = signal(SignalKind::terminate())?;
     let mut interrupt_signal = signal(SignalKind::interrupt())?;
     tokio::select! {

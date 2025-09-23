@@ -1,7 +1,7 @@
 use sqlx_postgres::{PgPool, PgPoolOptions};
 use crate::errors::{AppDomain, AppError};
 
-fn get_pg_pool(config: &DatabaseConfig) -> Result<PgPool, AppError> {
+pub fn get_pg_pool(config: &DatabaseConfig) -> Result<PgPool, AppError> {
     let database_url = config.full_url();
     PgPoolOptions::new()
         .max_connections(5)

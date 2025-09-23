@@ -13,6 +13,7 @@ impl Error for AppError {}
 pub enum AppDomain {
     DatabaseConfig,
     DatabaseInitialization,
+    DatabaseTableCreation,
 }
 
 impl fmt::Display for AppDomain {
@@ -20,6 +21,7 @@ impl fmt::Display for AppDomain {
         match self {
             AppDomain::DatabaseConfig => write!(f, "Database"),
             AppDomain::DatabaseInitialization => write!(f, "Database Initialization"),
+            AppDomain::DatabaseTableCreation => write!(f, "Database Table Creation"),
         }
     }
 }

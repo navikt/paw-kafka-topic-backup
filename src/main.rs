@@ -4,6 +4,7 @@ mod nais_http_apis;
 mod postgres;
 mod errors;
 mod database_config;
+mod table;
 
 use std::error::Error;
 use std::process::exit;
@@ -15,6 +16,7 @@ use sqlx::PgPool;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::task;
 use crate::logging::init_log;
+use crate::table::create_table;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -26,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     task::spawn(register_nais_http_apis(app_state));
     info!("HTTP server startet");
-    let pg_pool = match init_db() {
+    let pg_pool = match init_db().await {
         Ok(pool) => pool,
         Err(e) => {
             error!("Feil ved initiering av database: {}", e);
@@ -60,10 +62,12 @@ async fn await_signal() -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn init_db() -> Result<PgPool, Box<dyn Error>> {
+async fn init_db() -> Result<PgPool, Box<dyn Error>> {
     let db_config = database_config::get_database_config()?;
     info!("Database config: {:?}", db_config);
     let pg_pool = postgres::get_pg_pool(&db_config)?;
     info!("Postgres pool opprettet");
+    let _ = create_table(&pg_pool).await?;
+    info!("Tabell opprettet eller eksisterer allerede");
     Ok(pg_pool)
 }

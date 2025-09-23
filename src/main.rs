@@ -1,6 +1,8 @@
 mod logging;
 mod app_state;
 mod nais_http_apis;
+mod postgres;
+mod errors;
 
 use crate::app_state::AppState;
 use crate::nais_http_apis::register_nais_http_apis;
@@ -17,6 +19,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         is_ready: true,
         has_started: true,
     };
+    let database_config = postgres::get_database_config();
+    match database_config {
+        Ok(config) => info!("Database config: {:?}", config),
+        Err(e) => {
+            eprintln!("Error getting database config: {:?}", e);
+        }
+    }
     task::spawn(register_nais_http_apis(app_state));
     info!("HTTP server startet");
 

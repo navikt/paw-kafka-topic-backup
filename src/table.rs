@@ -19,7 +19,7 @@ async fn _create_table(pool: &PgPool) -> Result<(), Box<dyn Error>> {
             topic VARCHAR(255) NOT NULL,
             partition SMALLINT NOT NULL,
             offset BIGINT NOT NULL,
-            timestamp TIMESTAMPT(3) WITH TIME ZONE NOT NULL,
+            timestamp TIMESTAMP(3) WITH TIME ZONE NOT NULL,
             headers BYTEA,
             record_key BYTEA,
             record_value BYTEA,

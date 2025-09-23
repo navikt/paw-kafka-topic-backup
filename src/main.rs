@@ -35,6 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             exit(1);
         }
     };
+    let _ = create_table(&pg_pool).await?;
     let _ = match await_signal().await {
         Ok(_) => { () }
         Err(e) => {
@@ -67,7 +68,5 @@ async fn init_db() -> Result<PgPool, Box<dyn Error>> {
     info!("Database config: {:?}", db_config);
     let pg_pool = postgres::get_pg_pool(&db_config)?;
     info!("Postgres pool opprettet");
-    let _ = create_table(&pg_pool).await?;
-    info!("Tabell opprettet eller eksisterer allerede");
     Ok(pg_pool)
 }

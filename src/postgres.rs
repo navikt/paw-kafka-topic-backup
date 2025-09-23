@@ -1,5 +1,5 @@
 use sqlx::PgPool;
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgPoolOptions};
 use crate::database_config::DatabaseConfig;
 use crate::errors::{AppDomain, AppError};
 

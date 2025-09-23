@@ -14,7 +14,7 @@ pub struct DatabaseConfig {
 impl DatabaseConfig {
     pub fn full_url(&self) -> String {
         format!(
-            "postgresql://{}:{}@{}:{}/{}?sslmode=verify-full",
+            "postgresql://{}:{}@{}:{}/{}",
             self.user,
             self.password,
             self.ip,
@@ -47,9 +47,9 @@ pub fn get_database_config() -> Result<DatabaseConfig, AppError> {
         user: get_db_env("USERNAME")?,
         password: get_db_env("PASSWORD")?,
         db_name: get_db_env("DATABASE")?,
-        pg_ssl_cert_path: get_db_env("SSLCERT")?,
-        pg_ssl_key_path: get_db_env("SSLKEY")?,
-        pg_ssl_root_cert_path: get_db_env("SSLROOTCERT")?,
+        pg_ssl_cert_path: get_env("PGSSLCERT")?,
+        pg_ssl_key_path: get_env("PGSSLKEY")?,
+        pg_ssl_root_cert_path: get_env("PGSSLROOTCERT")?,
     })
 }
 
@@ -58,6 +58,14 @@ fn get_db_env(var: &str) -> Result<String, AppError> {
         "NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUP_{}",
         var
     );
+    std::env::var(key).map_err(|_| AppError {
+        domain: AppDomain::DatabaseConfig,
+        value: var.to_string()
+    } )
+}
+
+fn get_env(var: &str) -> Result<String, AppError> {
+    let key = var;
     std::env::var(key).map_err(|_| AppError {
         domain: AppDomain::DatabaseConfig,
         value: var.to_string()

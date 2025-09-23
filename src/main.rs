@@ -3,6 +3,7 @@ mod app_state;
 mod nais_http_apis;
 mod postgres;
 mod errors;
+mod DatabaseConfig;
 
 use std::error::Error;
 use std::process::exit;
@@ -60,7 +61,7 @@ async fn await_signal() -> Result<(), Box<dyn Error>> {
 }
 
 fn init_db() -> Result<PgPool, Box<dyn Error>> {
-    let db_config = postgres::get_database_config()?;
+    let db_config = DatabaseConfig::get_database_config()?;
     info!("Database config: {:?}", db_config);
     let pg_pool = postgres::get_pg_pool(&db_config)?;
     info!("Postgres pool opprettet");

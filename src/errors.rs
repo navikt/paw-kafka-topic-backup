@@ -30,7 +30,7 @@ impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} environment variable {} is not set or has invalid value",
+            "{} :: {}",
             self.domain,
             self.value
         )

@@ -35,7 +35,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             exit(1);
         }
     };
-    let _ = create_table(&pg_pool).await?;
+    let _ = match create_table(&pg_pool).await {
+        Ok(_) => {
+            info!("Tabell opprettet eller eksisterer allerede");
+            ()
+        }
+        Err(e) => {
+            error!("Feil ved oppretting av tabell: {}", e);
+            exit(1);
+        }
+    };
     let _ = match await_signal().await {
         Ok(_) => { () }
         Err(e) => {

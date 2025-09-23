@@ -15,11 +15,11 @@ spec:
     - name: PGSSLMODE
       value: "VerifyFull"
     - name: PGSSLROOTCERT
-      value: "$(SSLROOTCERT)"
+      value: "$(NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUP_SSLROOTCERT)"
     - name: PGSSLCERT
-      value: "$(SSLCERT)"
+      value: "$(NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUP_SSLCERT)"
     - name: PGSSLKEY
-      value: "$(SSLKEY)"
+      value: "$(NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUP_SSLKEY)"
   liveness:
     path: /internal/isAlive
     initialDelay: 10

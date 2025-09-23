@@ -9,5 +9,6 @@ axum = "0.8.4"
 prometheus = "0.14.0"
 log4rs = "1.4.0"
 log = "0.4.28"
-sqlx-postgres = "0.8.6"
-rdkafka = "0.38.0"
+sqlx = {  version = "0.8.6", features = ["postgres", "runtime-tokio", "tls-rustls", "macros"] }
+#sqlx-postgres = {  version = "0.8.6"}
+#rdkafka = "0.38.0"

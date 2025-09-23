@@ -11,7 +11,7 @@ use crate::app_state::AppState;
 use crate::nais_http_apis::register_nais_http_apis;
 use log::info;
 use log::error;
-use sqlx_postgres::PgPool;
+use sqlx::PgPool;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::task;
 use crate::logging::init_log;

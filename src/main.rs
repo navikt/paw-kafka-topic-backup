@@ -44,7 +44,8 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     let _ = create_table(&pg_pool).await?;
     let stream = create_kafka_consumer(
         "hendelselogg-backup-2-v1",
-        &["paw.arbeidssoker-hendelseslogg-v1"]
+        &["paw.arbeidssoker-hendelseslogg-v1"],
+        false
     )?;
     let first_record = stream.recv().await?;
     info!("Første melding mottatt fra Kafka: {:?}", first_record);

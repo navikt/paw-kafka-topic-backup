@@ -1,26 +1,31 @@
 use std::error::Error;
-use rdkafka::config::ClientConfig;
+use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::{Consumer, StreamConsumer};
 use crate::database_config::get_env;
 
-pub fn create_kafka_consumer(group_id: &str, topics: &[&str]) -> Result<StreamConsumer, Box<dyn Error>> {
+pub fn create_kafka_consumer(group_id: &str, topics: &[&str], auto_commit: bool) -> Result<StreamConsumer, Box<dyn Error>> {
     let brokers = get_env("KAFKA_BROKERS")?;
-    let cert_path = get_env("KAFKA_CERTIFICATE_PATH")?;
-    let key_path = get_env("KAFKA_KEY_PATH")?;
-    let ca_path = get_env("KAFKA_CA_PATH")?;
-
+    let truststore_path = get_env("KAFKA_TRUSTSTORE_PATH")?;
+    let truststore_password = get_env("KAFKA_CREDSTORE_PASSWORD")?;
+    let keystore_path = get_env("KAFKA_KEYSTORE_PATH")?;
+    let auto_commit = if auto_commit { "true" } else { "false" };
     let mut config = ClientConfig::new();
     config
+        .set("security.protocol", "ssl")
+        .set("ssl.truststore.type", "JKS")
+        .set("ssl.truststore.location", &truststore_path)
+        .set("ssl.truststore.password", &truststore_password)
+        .set("ssl.keystore.type", "PKCS12")
+        .set("ssl.keystore.location", &keystore_path)
+        .set("ssl.keystore.password", &truststore_password)
+        .set("ssl.key.password", &truststore_password)
+        .set("ssl.endpoint.identification.algorithm", "")
+        .set("enable.auto.commit", auto_commit)
+        .set("auto.offset.reset", "earliest")
         .set("bootstrap.servers", &brokers)
         .set("group.id", group_id)
-        .set("security.protocol", "SSL")
-        .set("ssl.certificate.location", &cert_path)
-        .set("ssl.key.location", &key_path)
-        .set("ssl.ca.location", &ca_path)
-        .set("enable.partition.eof", "false")
-        .set("session.timeout.ms", "6000")
-        .set("auto.offset.reset", "earliest");
-
+        .set("max.poll.records", "100")
+        .set_log_level(RDKafkaLogLevel::Info);
     let consumer: StreamConsumer = config.create()?;
     consumer.subscribe(topics)?;
     Ok(consumer)

@@ -1,4 +1,4 @@
-use crate::errors::{AppDomain, AppError};
+use crate::errors::{DATABASE_CONFIG, AppError};
 
 pub struct DatabaseConfig {
     pub ip: String,
@@ -43,7 +43,7 @@ pub fn get_database_config() -> Result<DatabaseConfig, AppError> {
     Ok(DatabaseConfig {
         ip: get_db_env("HOST")?,
         port: get_db_env("PORT")?.parse()
-            .map_err(|_| AppError { domain: AppDomain::DatabaseConfig, value: "PORT".to_string() })?,
+            .map_err(|_| AppError { domain: DATABASE_CONFIG.to_string(), value: "PORT".to_string() })?,
         user: get_db_env("USERNAME")?,
         password: get_db_env("PASSWORD")?,
         db_name: get_db_env("DATABASE")?,
@@ -59,7 +59,7 @@ fn get_db_env(var: &str) -> Result<String, AppError> {
         var
     );
     std::env::var(key).map_err(|_| AppError {
-        domain: AppDomain::DatabaseConfig,
+        domain: DATABASE_CONFIG.to_string(),
         value: var.to_string()
     } )
 }
@@ -67,7 +67,7 @@ fn get_db_env(var: &str) -> Result<String, AppError> {
 fn get_env(var: &str) -> Result<String, AppError> {
     let key = var;
     std::env::var(key).map_err(|_| AppError {
-        domain: AppDomain::DatabaseConfig,
+        domain: DATABASE_CONFIG.to_string(),
         value: var.to_string()
     } )
 }

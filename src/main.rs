@@ -19,7 +19,17 @@ use crate::logging::init_log;
 use crate::table::create_table;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() {
+    let _x = match run_app().await {
+        Ok(_) => {}
+        Err(e) => {
+            error!("Feil ved kjøring av applikasjon, avslutter: {}", e);
+            exit(1);
+        }
+    };
+}
+
+async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     init_log();
     let app_state = AppState {
         is_alive: true,
@@ -28,30 +38,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     task::spawn(register_nais_http_apis(app_state));
     info!("HTTP server startet");
-    let pg_pool = match init_db().await {
-        Ok(pool) => pool,
-        Err(e) => {
-            error!("Feil ved initiering av database: {}", e);
-            exit(1);
-        }
-    };
-    let _ = match create_table(&pg_pool).await {
-        Ok(_) => {
-            info!("Tabell opprettet eller eksisterer allerede");
-            ()
-        }
-        Err(e) => {
-            error!("Feil ved oppretting av tabell: {}", e);
-            exit(1);
-        }
-    };
-    let _ = match await_signal().await {
-        Ok(_) => { () }
-        Err(e) => {
-            error!("Feil ved venting på signal: {}", e);
-            ()
-        }
-    };
+    let pg_pool = init_db().await?;
+    let _ = create_table(&pg_pool).await?;
+    let _ = await_signal().await?;
     pg_pool.close().await;
     info!("Pg pool lukket");
     Ok(())
@@ -75,7 +64,7 @@ async fn await_signal() -> Result<(), Box<dyn Error>> {
 async fn init_db() -> Result<PgPool, Box<dyn Error>> {
     let db_config = database_config::get_database_config()?;
     info!("Database config: {:?}", db_config);
-    let pg_pool = postgres::get_pg_pool(&db_config)?;
+    let pg_pool = postgres::get_pg_pool(&db_config).await?;
     info!("Postgres pool opprettet");
     Ok(pg_pool)
 }

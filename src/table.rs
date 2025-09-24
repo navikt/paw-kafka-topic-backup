@@ -1,12 +1,12 @@
 use std::error::Error;
 use sqlx::PgPool;
-use crate::errors::{AppError, AppDomain};
+use crate::errors::{AppError, DATABASE_CREATE_TABLE};
 
 pub async fn create_table(pool: &PgPool) -> Result<(), AppError> {
     _create_table(&pool)
         .await
         .map_err(|e| AppError {
-        domain: AppDomain::DatabaseTableCreation,
+        domain: DATABASE_CREATE_TABLE.to_string(),
         value: format!("Failed to create table: {}", e)
     })
 }

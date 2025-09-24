@@ -3,28 +3,17 @@ use std::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct AppError {
-    pub domain: AppDomain,
+    pub domain: String,
     pub value: String
 }
 
+pub const DATABASE_CONFIG: &str = "database_config";
+pub const DATABASE_CONNECTION: &str = "database_connection";
+pub const DATABASE_CREATE_TABLE: &str = "database_create_table";
+
+
 impl Error for AppError {}
 
-#[derive(Debug, Clone)]
-pub enum AppDomain {
-    DatabaseConfig,
-    DatabaseInitialization,
-    DatabaseTableCreation,
-}
-
-impl fmt::Display for AppDomain {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AppDomain::DatabaseConfig => write!(f, "Database"),
-            AppDomain::DatabaseInitialization => write!(f, "Database Initialization"),
-            AppDomain::DatabaseTableCreation => write!(f, "Database Table Creation"),
-        }
-    }
-}
 
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

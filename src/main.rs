@@ -67,7 +67,7 @@ async fn read_all(stream: StreamConsumer) {
                 counter += 1;
             }
         }
-        if counter % 10 == 0 {
+        if counter % 1000 == 0 {
             info!("Antall meldinger mottatt: {}", counter);
         }
     }

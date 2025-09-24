@@ -7,18 +7,19 @@ mod database_config;
 mod table;
 mod kafka_connection;
 
-use std::error::Error;
-use std::process::exit;
 use crate::app_state::AppState;
-use crate::nais_http_apis::register_nais_http_apis;
-use log::info;
-use log::error;
-use sqlx::PgPool;
-use tokio::signal::unix::{signal, SignalKind};
-use tokio::task;
 use crate::kafka_connection::create_kafka_consumer;
 use crate::logging::init_log;
+use crate::nais_http_apis::register_nais_http_apis;
 use crate::table::create_table;
+use log::error;
+use log::info;
+use rdkafka::consumer::{StreamConsumer};
+use sqlx::PgPool;
+use std::error::Error;
+use std::process::exit;
+use tokio::signal::unix::{signal, SignalKind};
+use tokio::task;
 
 #[tokio::main]
 async fn main() {
@@ -47,12 +48,29 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         &["paw.arbeidssoker-hendelseslogg-v1"],
         false
     )?;
-    let first_record = stream.recv().await?;
-    info!("Første melding mottatt fra Kafka: {:?}", first_record);
+    read_all(stream).await;
     let _ = await_signal().await?;
     pg_pool.close().await;
     info!("Pg pool lukket");
     Ok(())
+}
+
+async fn read_all(stream: StreamConsumer) {
+    let mut counter = 0;
+    loop {
+        match stream.recv().await {
+            Err(e) => {
+                error!("Kafka error: {}", e);
+                exit(2);
+            },
+            Ok(_) => {
+                counter += 1;
+            }
+        }
+        if counter % 10 == 0 {
+            info!("Antall meldinger mottatt: {}", counter);
+        }
+    }
 }
 
 async fn await_signal() -> Result<(), Box<dyn Error>> {

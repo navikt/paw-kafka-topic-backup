@@ -1,6 +1,6 @@
 FROM rust:bookworm as builder
 WORKDIR /build
-RUN apt-get update && apt-get install -y --no-install-recommends cmake
+RUN apt-get update && apt-get install -y --no-install-recommends cmake libssl-dev
 COPY . .
 #ENV RUSTFLAGS='-C target-feature=+crt-static'
 RUN cargo build --release

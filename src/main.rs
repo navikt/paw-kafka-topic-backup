@@ -18,6 +18,8 @@ use rdkafka::consumer::{StreamConsumer};
 use sqlx::PgPool;
 use std::error::Error;
 use std::process::exit;
+use rdkafka::Message;
+use rdkafka::message::Headers;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::task;
 
@@ -63,12 +65,14 @@ async fn read_all(stream: StreamConsumer) {
                 error!("Kafka error: {}", e);
                 exit(2);
             },
-            Ok(_) => {
+            Ok(msg) => {
                 counter += 1;
+                if counter % 1000 == 0 {
+                    info!("Antall meldinger mottatt: {}", counter);
+                    info!("Leste melding: topic={}, partition={}, offset={}, header={}, value_size={}",
+                        msg.topic(), msg.partition(), msg.offset(), msg.headers().map(|h| h.count()).get_or_insert(0), msg.payload_len());
+                }
             }
-        }
-        if counter % 1000 == 0 {
-            info!("Antall meldinger mottatt: {}", counter);
         }
     }
 }

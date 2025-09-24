@@ -5,6 +5,7 @@ mod postgres;
 mod errors;
 mod database_config;
 mod table;
+mod kafka_connection;
 
 use std::error::Error;
 use std::process::exit;
@@ -15,6 +16,7 @@ use log::error;
 use sqlx::PgPool;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::task;
+use crate::kafka_connection::create_kafka_consumer;
 use crate::logging::init_log;
 use crate::table::create_table;
 
@@ -40,6 +42,12 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     info!("HTTP server startet");
     let pg_pool = init_db().await?;
     let _ = create_table(&pg_pool).await?;
+    let stream = create_kafka_consumer(
+        "hendelselogg-backup-2-v1",
+        &["paw.arbeidssoker-hendelseslogg-v1"]
+    )?;
+    let first_record = stream.recv().await?;
+    info!("Første melding mottatt fra Kafka: {:?}", first_record);
     let _ = await_signal().await?;
     pg_pool.close().await;
     info!("Pg pool lukket");

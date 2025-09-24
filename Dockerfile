@@ -1,11 +1,13 @@
-FROM clux/muslrust:stable as builder
+FROM rust:bookworm as builder
 WORKDIR /build
+RUN apt-get update && apt-get install -y --no-install-recommends cmake
 COPY . .
-ENV RUSTFLAGS='-C target-feature=+crt-static'
+#ENV RUSTFLAGS='-C target-feature=+crt-static'
 RUN cargo build --release
 
-FROM cgr.dev/chainguard/static:latest
+#FROM cgr.dev/chainguard/static:latest
+FROM rust:1.89.0-slim
 WORKDIR /app
-COPY --from=builder /build/target/x86_64-unknown-linux-musl/release/paw-kafka-topic-backup /app/paw-kafka-topic-backup
+COPY --from=builder /build/target/release/paw-kafka-topic-backup /app/paw-kafka-topic-backup
 EXPOSE 8080
-CMD ["/app/paw-kafka-topic-backup"]
+ENTRYPOINT ["/app/paw-kafka-topic-backup"]

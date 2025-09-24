@@ -1,13 +1,11 @@
-FROM rust:bookworm as builder
+FROM clux/muslrust:stable as builder
 WORKDIR /build
-RUN apt-get update && apt-get install -y --no-install-recommends cmake libssl-dev
 COPY . .
-#ENV RUSTFLAGS='-C target-feature=+crt-static'
-RUN cargo build --release
+ENV RUSTFLAGS='-C target-feature=+crt-static'
+RUN cargo build --target x86_64-unknown-linux-musl --release
 
-#FROM cgr.dev/chainguard/static:latest
-FROM rust:1.89.0-slim
+FROM cgr.dev/chainguard/static:latest
 WORKDIR /app
-COPY --from=builder /build/target/release/paw-kafka-topic-backup /app/paw-kafka-topic-backup
+COPY --from=builder /build/target/x86_64-unknown-linux-musl/release/paw-kafka-topic-backup /app/paw-kafka-topic-backup
 EXPOSE 8080
 ENTRYPOINT ["/app/paw-kafka-topic-backup"]

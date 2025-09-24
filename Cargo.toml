@@ -10,4 +10,4 @@ prometheus = "0.14.0"
 log4rs = "1.4.0"
 log = "0.4.28"
 sqlx = {  version = "0.8.6", features = ["postgres", "runtime-tokio", "tls-rustls", "macros"] }
-rdkafka = { version = "0.38.0", features = ["cmake-build", "tracing", "tokio", "ssl-vendored"] }
+rdkafka = { version = "0.38.0", features = ["tracing", "tokio", "ssl-vendored"] }

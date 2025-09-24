@@ -48,7 +48,7 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         &["paw.arbeidssoker-hendelseslogg-v1"],
         false
     )?;
-    read_all(stream).await;
+    task::spawn(read_all(stream));
     let _ = await_signal().await?;
     pg_pool.close().await;
     info!("Pg pool lukket");

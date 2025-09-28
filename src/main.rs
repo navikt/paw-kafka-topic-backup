@@ -6,6 +6,9 @@ mod kafka;
 mod logging;
 mod nais_http_apis;
 
+#[cfg(test)]
+mod tests;
+
 use crate::app_state::AppState;
 use crate::database::create_tables;
 use crate::database::hwm_statements::update_hwm;

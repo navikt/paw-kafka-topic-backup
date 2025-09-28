@@ -8,6 +8,7 @@ mod nais_http_apis;
 
 use crate::app_state::AppState;
 use crate::database::create_tables;
+use crate::database::hwm_statements::update_hwm;
 use crate::database::init_pg_pool::init_db;
 use crate::database::insert_data;
 use crate::kafka::config::ApplicationKafkaConfig;
@@ -20,7 +21,6 @@ use log::error;
 use log::info;
 use rdkafka::Message;
 use rdkafka::consumer::StreamConsumer;
-use rdkafka::message::Headers;
 use sqlx::PgPool;
 use std::error::Error;
 use std::process::exit;
@@ -86,7 +86,6 @@ async fn read_all(
     pg_pool: PgPool,
     stream: StreamConsumer<HwmRebalanceHandler>,
 ) -> Result<(), Box<dyn Error>> {
-    let mut counter = 0;
     loop {
         match stream.recv().await {
             Err(e) => {
@@ -95,27 +94,31 @@ async fn read_all(
             }
             Ok(msg) => {
                 let mut tx = pg_pool.begin().await?;
-                let _ = insert_data::insert_data(
+                let hwm_ok = update_hwm(
                     &mut tx,
-                    msg.topic(),
+                    msg.topic().to_string(),
                     msg.partition(),
                     msg.offset(),
-                    msg.timestamp().to_millis().unwrap_or(0),
-                    extract_headers_as_json(&msg)?,
-                    msg.key().unwrap_or(&[]),
-                    msg.payload().unwrap_or(&[]),
                 )
                 .await?;
-                counter += 1;
-                if counter % 1000 == 0 {
-                    info!("Antall meldinger mottatt: {}", counter);
-                    info!(
-                        "Leste melding: topic={}, partition={}, offset={}, header={}, value_size={}",
+                if hwm_ok {
+                    let _ = insert_data::insert_data(
+                        &mut tx,
                         msg.topic(),
                         msg.partition(),
                         msg.offset(),
-                        msg.headers().map(|h| h.count()).get_or_insert(0),
-                        msg.payload_len()
+                        msg.timestamp().to_millis().unwrap_or(0),
+                        extract_headers_as_json(&msg)?,
+                        msg.key().unwrap_or(&[]),
+                        msg.payload().unwrap_or(&[]),
+                    )
+                    .await?;
+                } else {
+                    info!(
+                        "Below HWM, skipping insert: topic={}, partition={}, offset={}",
+                        msg.topic(),
+                        msg.partition(),
+                        msg.offset()
                     );
                 }
             }

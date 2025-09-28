@@ -1,21 +1,6 @@
 use sqlx::{Postgres, Transaction};
 
-const QUERY_HWM: &str = r#"
-            SELECT hwm
-            FROM hwm
-            WHERE kafka_topic = $1 AND kafka_partition = $2
-            "#;
-
-const INSERT_HWM: &str = r#"
-            INSERT INTO hwm (kafka_topic, kafka_partition, hwm)
-            VALUES ($1, $2, $3)
-            "#;
-
-const UPDATE_HWM: &str = r#"
-            UPDATE hwm
-            SET hwm = $3
-            WHERE kafka_topic = $1 AND kafka_partition = $2 AND hwm < $3
-            "#;
+use crate::database::{INSERT_HWM, QUERY_HWM, UPDATE_HWM};
 
 pub async fn update_hwm(
     tx: &mut Transaction<'_, Postgres>,

@@ -1171,10 +1171,12 @@ name = "paw-kafka-topic-backup"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "base64",
  "log",
  "log4rs",
  "prometheus",
  "rdkafka",
+ "serde_json",
  "sqlx",
  "tokio",
 ]

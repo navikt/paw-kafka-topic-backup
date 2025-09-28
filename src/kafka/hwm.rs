@@ -1,4 +1,4 @@
-use std::{error::Error, process::exit, sync::Arc};
+use std::{error::Error, process::exit};
 
 use crate::database::hwm_statements::{get_hwm, insert_hwm};
 use log::{error, info};
@@ -31,7 +31,7 @@ pub struct Topic {
 }
 
 pub struct HwmRebalanceHandler {
-    pub pg_pool: Arc<PgPool>,
+    pub pg_pool: PgPool,
 }
 
 impl Default for HwmRebalanceHandler {

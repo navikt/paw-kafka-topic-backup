@@ -5,7 +5,7 @@ pub const CREATE_DATA_TABLE: &str = r#"
             kafka_partition SMALLINT NOT NULL,
             kafka_offset BIGINT NOT NULL,
             timestamp TIMESTAMP(3) WITH TIME ZONE NOT NULL,
-            headers BYTEA,
+            headers JSONB,
             record_key BYTEA,
             record_value BYTEA,
             UNIQUE(kafka_topic, kafka_partition, kafka_offset)

@@ -1,4 +1,4 @@
-use std::{error::Error, sync::Arc};
+use std::error::Error;
 
 use rdkafka::consumer::{Consumer, StreamConsumer};
 use sqlx::PgPool;
@@ -6,7 +6,7 @@ use sqlx::PgPool;
 use crate::kafka::{config::ApplicationKafkaConfig, hwm::HwmRebalanceHandler};
 
 pub fn create_kafka_consumer(
-    pg_pool: Arc<PgPool>,
+    pg_pool: PgPool,
     app_config: ApplicationKafkaConfig,
     topics: &[&str],
 ) -> Result<StreamConsumer<HwmRebalanceHandler>, Box<dyn Error>> {

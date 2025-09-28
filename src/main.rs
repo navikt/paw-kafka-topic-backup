@@ -9,7 +9,9 @@ mod nais_http_apis;
 use crate::app_state::AppState;
 use crate::database::create_tables;
 use crate::database::init_pg_pool::init_db;
+use crate::database::insert_data;
 use crate::kafka::config::ApplicationKafkaConfig;
+use crate::kafka::headers::extract_headers_as_json;
 use crate::kafka::hwm::HwmRebalanceHandler;
 use crate::kafka::kafka_connection::create_kafka_consumer;
 use crate::logging::init_log;
@@ -19,9 +21,9 @@ use log::info;
 use rdkafka::Message;
 use rdkafka::consumer::StreamConsumer;
 use rdkafka::message::Headers;
+use sqlx::PgPool;
 use std::error::Error;
 use std::process::exit;
-use std::sync::Arc;
 use tokio::signal::unix::{SignalKind, signal};
 
 #[tokio::main]
@@ -45,14 +47,14 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     let http_server_task = register_nais_http_apis(app_state);
     info!("HTTP server startet");
     let pg_pool = init_db().await?;
-    let pg_pool = Arc::new(pg_pool);
+    //let pg_pool = Arc::new(pg_pool);
     let _ = create_tables(&pg_pool).await?;
     let stream = create_kafka_consumer(
         pg_pool.clone(),
         ApplicationKafkaConfig::new("hedelselogg_backup2_v1", "ssl"),
         &["paw.arbeidssoker-hendelseslogg-v1"],
     )?;
-    let reader = read_all(stream);
+    let reader = read_all(pg_pool.clone(), stream);
     let signal = await_signal();
     tokio::select! {
         result = http_server_task => {
@@ -80,7 +82,10 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn read_all(stream: StreamConsumer<HwmRebalanceHandler>) -> Result<(), Box<dyn Error>> {
+async fn read_all(
+    pg_pool: PgPool,
+    stream: StreamConsumer<HwmRebalanceHandler>,
+) -> Result<(), Box<dyn Error>> {
     let mut counter = 0;
     loop {
         match stream.recv().await {
@@ -89,6 +94,18 @@ async fn read_all(stream: StreamConsumer<HwmRebalanceHandler>) -> Result<(), Box
                 exit(2);
             }
             Ok(msg) => {
+                let mut tx = pg_pool.begin().await?;
+                let _ = insert_data::insert_data(
+                    &mut tx,
+                    msg.topic(),
+                    msg.partition(),
+                    msg.offset(),
+                    msg.timestamp().to_millis().unwrap_or(0),
+                    extract_headers_as_json(&msg)?,
+                    msg.key().unwrap_or(&[]),
+                    msg.payload().unwrap_or(&[]),
+                )
+                .await?;
                 counter += 1;
                 if counter % 1000 == 0 {
                     info!("Antall meldinger mottatt: {}", counter);

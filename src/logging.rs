@@ -10,10 +10,7 @@ pub fn init_log() {
         .build();
     let config = Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .logger(Logger::builder().build(
-            "app::paw-kafka-topic-backup",
-            LevelFilter::Info,
-        ))
+        .logger(Logger::builder().build("app::paw-kafka-topic-backup", LevelFilter::Info))
         .build(Root::builder().appender("stdout").build(LevelFilter::Info))
         .unwrap();
     log4rs::init_config(config).unwrap();

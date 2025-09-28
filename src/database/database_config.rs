@@ -1,4 +1,5 @@
-use crate::errors::{GET_ENV_VAR, AppError};
+use crate::config_utils::get_env::get_env;
+use crate::errors::{AppError, GET_ENV_VAR};
 
 pub struct DatabaseConfig {
     pub ip: String,
@@ -15,11 +16,7 @@ impl DatabaseConfig {
     pub fn full_url(&self) -> String {
         format!(
             "postgresql://{}:{}@{}:{}/{}",
-            self.user,
-            self.password,
-            self.ip,
-            self.port,
-            self.db_name
+            self.user, self.password, self.ip, self.port, self.db_name
         )
     }
 }
@@ -39,11 +36,23 @@ impl std::fmt::Debug for DatabaseConfig {
     }
 }
 
+impl std::fmt::Display for DatabaseConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Database connection to {}:{}/{}",
+            self.ip, self.port, self.db_name
+        )
+    }
+}
+
 pub fn get_database_config() -> Result<DatabaseConfig, AppError> {
     Ok(DatabaseConfig {
         ip: get_db_env("HOST")?,
-        port: get_db_env("PORT")?.parse()
-            .map_err(|_| AppError { domain: GET_ENV_VAR.to_string(), value: "PORT".to_string() })?,
+        port: get_db_env("PORT")?.parse().map_err(|_| AppError {
+            domain: GET_ENV_VAR.to_string(),
+            value: "PORT".to_string(),
+        })?,
         user: get_db_env("USERNAME")?,
         password: get_db_env("PASSWORD")?,
         db_name: get_db_env("DATABASE")?,
@@ -54,20 +63,9 @@ pub fn get_database_config() -> Result<DatabaseConfig, AppError> {
 }
 
 fn get_db_env(var: &str) -> Result<String, AppError> {
-    let key = format!(
-        "NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUP_{}",
-        var
-    );
+    let key = format!("NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUP_{}", var);
     std::env::var(&key).map_err(|_| AppError {
         domain: GET_ENV_VAR.to_string(),
-        value: format!("Failed to get env var {}", key)
-    } )
-}
-
-pub fn get_env(var: &str) -> Result<String, AppError> {
-    let key = var;
-    std::env::var(key).map_err(|_| AppError {
-        domain: GET_ENV_VAR.to_string(),
-        value: format!("Failed to get env var {}", var)
-    } )
+        value: format!("Failed to get env var {}", key),
+    })
 }

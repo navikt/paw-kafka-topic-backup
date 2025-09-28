@@ -1,26 +1,28 @@
-mod logging;
 mod app_state;
-mod nais_http_apis;
-mod postgres;
+mod config_utils;
+mod database;
 mod errors;
-mod database_config;
-mod table;
-mod kafka_connection;
+mod kafka;
+mod logging;
+mod nais_http_apis;
 
 use crate::app_state::AppState;
-use crate::kafka_connection::create_kafka_consumer;
+use crate::database::create_tables;
+use crate::database::init_pg_pool::init_db;
+use crate::kafka::config::ApplicationKafkaConfig;
+use crate::kafka::hwm::HwmRebalanceHandler;
+use crate::kafka::kafka_connection::create_kafka_consumer;
 use crate::logging::init_log;
 use crate::nais_http_apis::register_nais_http_apis;
-use crate::table::create_table;
 use log::error;
 use log::info;
-use rdkafka::consumer::{StreamConsumer};
-use sqlx::PgPool;
+use rdkafka::Message;
+use rdkafka::consumer::StreamConsumer;
+use rdkafka::message::Headers;
 use std::error::Error;
 use std::process::exit;
-use rdkafka::Message;
-use rdkafka::message::Headers;
-use tokio::signal::unix::{signal, SignalKind};
+use std::sync::Arc;
+use tokio::signal::unix::{SignalKind, signal};
 use tokio::task;
 
 #[tokio::main]
@@ -44,11 +46,12 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     task::spawn(register_nais_http_apis(app_state));
     info!("HTTP server startet");
     let pg_pool = init_db().await?;
-    let _ = create_table(&pg_pool).await?;
+    let pg_pool = Arc::new(pg_pool);
+    let _ = create_tables(&pg_pool).await?;
     let stream = create_kafka_consumer(
-        "hendelselogg-backup-2-v1",
+        pg_pool.clone(),
+        ApplicationKafkaConfig::new("hedelselogg_backup2_v1", "ssl"),
         &["paw.arbeidssoker-hendelseslogg-v1"],
-        false
     )?;
     task::spawn(read_all(stream));
     let _ = await_signal().await?;
@@ -57,20 +60,26 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn read_all(stream: StreamConsumer) {
+async fn read_all(stream: StreamConsumer<HwmRebalanceHandler>) {
     let mut counter = 0;
     loop {
         match stream.recv().await {
             Err(e) => {
                 error!("Kafka error: {}", e);
                 exit(2);
-            },
+            }
             Ok(msg) => {
                 counter += 1;
                 if counter % 1000 == 0 {
                     info!("Antall meldinger mottatt: {}", counter);
-                    info!("Leste melding: topic={}, partition={}, offset={}, header={}, value_size={}",
-                        msg.topic(), msg.partition(), msg.offset(), msg.headers().map(|h| h.count()).get_or_insert(0), msg.payload_len());
+                    info!(
+                        "Leste melding: topic={}, partition={}, offset={}, header={}, value_size={}",
+                        msg.topic(),
+                        msg.partition(),
+                        msg.offset(),
+                        msg.headers().map(|h| h.count()).get_or_insert(0),
+                        msg.payload_len()
+                    );
                 }
             }
         }
@@ -90,12 +99,4 @@ async fn await_signal() -> Result<(), Box<dyn Error>> {
             Ok(())
         },
     }
-}
-
-async fn init_db() -> Result<PgPool, Box<dyn Error>> {
-    let db_config = database_config::get_database_config()?;
-    info!("Database config: {:?}", db_config);
-    let pg_pool = postgres::get_pg_pool(&db_config).await?;
-    info!("Postgres pool opprettet");
-    Ok(pg_pool)
 }

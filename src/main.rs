@@ -23,7 +23,6 @@ use std::error::Error;
 use std::process::exit;
 use std::sync::Arc;
 use tokio::signal::unix::{SignalKind, signal};
-use tokio::task;
 
 #[tokio::main]
 async fn main() {
@@ -43,7 +42,7 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         is_ready: true,
         has_started: true,
     };
-    task::spawn(register_nais_http_apis(app_state));
+    let http_server_task = register_nais_http_apis(app_state);
     info!("HTTP server startet");
     let pg_pool = init_db().await?;
     let pg_pool = Arc::new(pg_pool);
@@ -53,14 +52,35 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         ApplicationKafkaConfig::new("hedelselogg_backup2_v1", "ssl"),
         &["paw.arbeidssoker-hendelseslogg-v1"],
     )?;
-    task::spawn(read_all(stream));
-    let _ = await_signal().await?;
-    pg_pool.close().await;
+    let reader = read_all(stream);
+    let signal = await_signal();
+    tokio::select! {
+        result = http_server_task => {
+            match result {
+                Ok(Ok(())) => info!("HTTP server completed"),
+                Ok(Err(e)) => error!("HTTP server failed: {}", e),
+                Err(join_error) => error!("HTTP server task panicked: {}", join_error),
+            }
+        }
+        result = reader => {
+            match result {
+                Ok(()) => info!("Reader completed"),
+                Err(e) => error!("Reader failed: {}", e),
+            }
+        }
+        result = signal => {
+            match result {
+                Ok(()) => info!("Signal received, shutting down..."),
+                Err(e) => error!("Signal handler failed: {}", e),
+            }
+        }
+    }
+    let _ = pg_pool.close().await;
     info!("Pg pool lukket");
     Ok(())
 }
 
-async fn read_all(stream: StreamConsumer<HwmRebalanceHandler>) {
+async fn read_all(stream: StreamConsumer<HwmRebalanceHandler>) -> Result<(), Box<dyn Error>> {
     let mut counter = 0;
     loop {
         match stream.recv().await {

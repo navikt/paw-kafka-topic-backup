@@ -2,13 +2,17 @@ use crate::app_state::AppState;
 use axum::extract::State;
 use axum::{Router, http::StatusCode, routing::get};
 use prometheus::{Encoder, TextEncoder};
+use tokio::task::JoinHandle;
 
-pub async fn register_nais_http_apis(app_state: AppState) {
-    let routes = routes(app_state);
-    let listener = tokio::net::TcpListener::bind(&"0.0.0.0:8080")
-        .await
-        .unwrap();
-    axum::serve(listener, routes).await.unwrap()
+pub fn register_nais_http_apis(
+    app_state: AppState,
+) -> JoinHandle<Result<(), Box<dyn std::error::Error + Send + Sync>>> {
+    tokio::spawn(async move {
+        let routes = routes(app_state);
+        let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
+        axum::serve(listener, routes).await?;
+        Ok(())
+    })
 }
 
 fn routes(app_state: AppState) -> Router {

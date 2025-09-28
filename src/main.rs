@@ -6,9 +6,6 @@ mod kafka;
 mod logging;
 mod nais_http_apis;
 
-#[cfg(test)]
-mod tests;
-
 use crate::app_state::AppState;
 use crate::database::create_tables;
 use crate::database::hwm_statements::update_hwm;
@@ -50,7 +47,6 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     let http_server_task = register_nais_http_apis(app_state);
     info!("HTTP server startet");
     let pg_pool = init_db().await?;
-    //let pg_pool = Arc::new(pg_pool);
     let _ = create_tables(&pg_pool).await?;
     let stream = create_kafka_consumer(
         pg_pool.clone(),

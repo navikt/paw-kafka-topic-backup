@@ -1,14 +1,10 @@
-#[cfg(test)]
-mod hwm_sql_tests {
-    use sqlx::PgPool;
-    use std::error::Error;
-    use testcontainers::{runners::AsyncRunner, ContainerAsync};
-    use testcontainers_modules::postgres::Postgres;
+use sqlx::PgPool;
+use std::error::Error;
+use testcontainers::{runners::AsyncRunner, ContainerAsync};
+use testcontainers_modules::postgres::Postgres;
 
-    // Import your modules
-    use crate::database::hwm_statements::{get_hwm, insert_hwm, update_hwm};
+use paw_kafka_topic_backup::database::hwm_statements::{get_hwm, insert_hwm, update_hwm};
 
-    /// Setup a test database container with a custom connection string for testing
     async fn setup_test_db() -> Result<(PgPool, ContainerAsync<Postgres>), Box<dyn Error>> {
         let postgres_container = Postgres::default()
             .start()
@@ -34,7 +30,7 @@ mod hwm_sql_tests {
         let pool = PgPool::connect(&connection_string).await?;
         
         // Create tables manually - need to import the SQL constant
-        sqlx::query(crate::database::sqls::CREATE_HWM_TABLE)
+        sqlx::query(paw_kafka_topic_backup::database::sqls::CREATE_HWM_TABLE)
             .execute(&pool)
             .await?;
 
@@ -213,5 +209,3 @@ mod hwm_sql_tests {
 
         assert!(result.is_none(), "HWM should not exist after rollback");
     }
-
-}

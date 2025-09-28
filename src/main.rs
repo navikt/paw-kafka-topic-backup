@@ -28,8 +28,10 @@ use tokio::signal::unix::{SignalKind, signal};
 
 #[tokio::main]
 async fn main() {
-    let _x = match run_app().await {
-        Ok(_) => {}
+    let _ = match run_app().await {
+        Ok(_) => {
+            info!("Applikasjonen avsluttet uten feil");
+        }
         Err(e) => {
             error!("Feil ved kjøring av applikasjon, avslutter: {}", e);
             exit(1);
@@ -58,21 +60,21 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     tokio::select! {
         result = http_server_task => {
             match result {
-                Ok(Ok(())) => info!("HTTP server completed"),
-                Ok(Err(e)) => error!("HTTP server failed: {}", e),
+                Ok(Ok(())) => info!("HTTP server stoppet."),
+                Ok(Err(e)) => error!("HTTP server feilet: {}", e),
                 Err(join_error) => error!("HTTP server task panicked: {}", join_error),
             }
         }
         result = reader => {
             match result {
-                Ok(()) => info!("Reader completed"),
-                Err(e) => error!("Reader failed: {}", e),
+                Ok(()) => info!("Lesing av kafka topics stoppet."),
+                Err(e) => error!("Lesing av kafka topics stoppet grunnet feil: {}", e),
             }
         }
         result = signal => {
             match result {
-                Ok(()) => info!("Signal received, shutting down..."),
-                Err(e) => error!("Signal handler failed: {}", e),
+                Ok(signal) => info!("Signal '{}' mottatt, avslutter....", signal),
+                Err(e) => error!("Avslutter grunnet feil i håndtering av SIGINT/SIGTERM: {}", e),
             }
         }
     }
@@ -125,17 +127,11 @@ async fn read_all(
     }
 }
 
-async fn await_signal() -> Result<(), Box<dyn Error>> {
+async fn await_signal() -> Result<String, Box<dyn Error>> {
     let mut term_signal = signal(SignalKind::terminate())?;
     let mut interrupt_signal = signal(SignalKind::interrupt())?;
     tokio::select! {
-        _ = term_signal.recv() => {
-            info!("\nSIGTERM mottatt, avslutter...");
-            Ok(())
-        },
-        _ = interrupt_signal.recv() => {
-            info!("\nSIGINT mottatt, avslutter...");
-            Ok(())
-        },
+        _ = term_signal.recv() => Ok("SIGTERM".to_string()),
+        _ = interrupt_signal.recv() => Ok("SIGINT".to_string())
     }
 }

@@ -21,6 +21,7 @@ use log::error;
 use log::info;
 use rdkafka::Message;
 use rdkafka::consumer::StreamConsumer;
+use rdkafka::message::BorrowedMessage;
 use sqlx::PgPool;
 use std::error::Error;
 use std::process::exit;
@@ -94,37 +95,45 @@ async fn read_all(
                 exit(2);
             }
             Ok(msg) => {
-                let mut tx = pg_pool.begin().await?;
-                let hwm_ok = update_hwm(
-                    &mut tx,
-                    msg.topic().to_string(),
-                    msg.partition(),
-                    msg.offset(),
-                )
-                .await?;
-                if hwm_ok {
-                    let _ = insert_data::insert_data(
-                        &mut tx,
-                        msg.topic(),
-                        msg.partition(),
-                        msg.offset(),
-                        msg.timestamp().to_millis().unwrap_or(0),
-                        extract_headers_as_json(&msg)?,
-                        msg.key().unwrap_or(&[]),
-                        msg.payload().unwrap_or(&[]),
-                    )
-                    .await?;
-                } else {
-                    info!(
-                        "Below HWM, skipping insert: topic={}, partition={}, offset={}",
-                        msg.topic(),
-                        msg.partition(),
-                        msg.offset()
-                    );
-                }
+                lagre_melding_i_db(pg_pool.clone(), msg).await?;
             }
         }
     }
+}
+
+pub async fn lagre_melding_i_db(
+    pg_pool: PgPool,
+    msg: BorrowedMessage<'_>,
+) -> Result<(), Box<dyn Error>> {
+    let mut tx = pg_pool.begin().await?;
+    let hwm_ok = update_hwm(
+        &mut tx,
+        msg.topic().to_string(),
+        msg.partition(),
+        msg.offset(),
+    )
+    .await?;
+    if hwm_ok {
+        let _ = insert_data::insert_data(
+            &mut tx,
+            msg.topic(),
+            msg.partition(),
+            msg.offset(),
+            msg.timestamp().to_millis().unwrap_or(0),
+            extract_headers_as_json(&msg)?,
+            msg.key().unwrap_or(&[]),
+            msg.payload().unwrap_or(&[]),
+        )
+        .await?;
+    } else {
+        info!(
+            "Below HWM, skipping insert: topic={}, partition={}, offset={}",
+            msg.topic(),
+            msg.partition(),
+            msg.offset()
+        );
+    }
+    Ok(())
 }
 
 async fn await_signal() -> Result<String, Box<dyn Error>> {

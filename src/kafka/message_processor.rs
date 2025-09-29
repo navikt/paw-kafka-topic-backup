@@ -57,7 +57,7 @@ pub async fn lagre_melding_i_db(
     
     let hwm_ok = update_hwm(
         &mut tx,
-        msg.topic.clone(),  // Clone for update_hwm which needs owned String
+        msg.topic.clone(),
         msg.partition,
         msg.offset,
     )
@@ -66,13 +66,13 @@ pub async fn lagre_melding_i_db(
     if hwm_ok {
         let _ = insert_data::insert_data(
             &mut tx,
-            topic,           // &String -> &str (auto deref)
+            topic,
             msg.partition,
             msg.offset,
             msg.timestamp,
             msg.headers,
-            msg.key,         // Vec<u8>
-            msg.payload,     // Vec<u8>
+            msg.key,
+            msg.payload,
         )
         .await?;
         tx.commit().await?;
@@ -99,10 +99,6 @@ pub async fn lagre_melding_i_db(
     Ok(())
 }
 
-/// Convenience function to process a BorrowedMessage directly
-/// 
-/// This function converts the BorrowedMessage to an owned KafkaMessage
-/// and then processes it. Use this when working with rdkafka consumers.
 pub async fn lagre_borrowed_message_i_db(
     pg_pool: PgPool,
     msg: BorrowedMessage<'_>,

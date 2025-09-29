@@ -1,6 +1,6 @@
-use std::{error::Error, process::exit};
+use std::{error::Error, process::exit, sync::Arc};
 
-use crate::database::hwm_statements::{get_hwm, insert_hwm};
+use crate::{app_state::{self, AppState}, database::hwm_statements::{get_hwm, insert_hwm}};
 use log::{error, info};
 use rdkafka::{
     ClientContext, Offset,
@@ -31,6 +31,7 @@ pub struct Topic {
 
 pub struct HwmRebalanceHandler {
     pub pg_pool: PgPool,
+    pub app_state: Arc<AppState>
 }
 
 impl Default for HwmRebalanceHandler {
@@ -102,7 +103,7 @@ impl ConsumerContext for HwmRebalanceHandler {
             }
             Rebalance::Error(e) => {
                 error!("Rebalance error: {}", e);
-                exit(1);
+                self.app_state.set_is_alive(false);
             }
         }
     }

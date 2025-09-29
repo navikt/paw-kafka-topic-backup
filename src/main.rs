@@ -21,7 +21,7 @@ use log::info;
 use rdkafka::consumer::StreamConsumer;
 use sqlx::PgPool;
 use std::error::Error;
-use std::process::exit;
+use std::sync::Arc;
 use tokio::signal::unix::{SignalKind, signal};
 
 #[tokio::main]
@@ -31,8 +31,7 @@ async fn main() {
             info!("Applikasjonen avsluttet uten feil");
         }
         Err(e) => {
-            error!("Feil ved kjøring av applikasjon, avslutter: {}", e);
-            exit(1);
+            error!("Feil ved kjøring av applikasjon, avslutter: {}", e);            
         }
     };
 }
@@ -44,40 +43,52 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     crate::metrics::init_metrics();
     info!("Prometheus metrics initialized");
     
-    let app_state = AppState {
-        is_alive: true,
-        is_ready: true,
-        has_started: true,
-    };
-    let http_server_task = register_nais_http_apis(app_state);
+    let app_state = Arc::new(AppState::new());
+    let http_server_task = register_nais_http_apis(app_state.clone());
     info!("HTTP server startet");
     let pg_pool = init_db().await?;
     let _ = create_tables(&pg_pool).await?;
     let stream = create_kafka_consumer(
+        app_state.clone(),
         pg_pool.clone(),
         ApplicationKafkaConfig::new("hedelselogg_backup2_v1", "ssl"),
         &["paw.arbeidssoker-hendelseslogg-v1"],
     )?;
     let reader = read_all(pg_pool.clone(), stream);
     let signal = await_signal();
+    info!("Alle tjenester startet, applikasjon kjører");
     tokio::select! {
         result = http_server_task => {
             match result {
-                Ok(Ok(())) => info!("HTTP server stoppet."),
-                Ok(Err(e)) => error!("HTTP server feilet: {}", e),
-                Err(join_error) => error!("HTTP server task panicked: {}", join_error),
+                Ok(Ok(())) => {
+                    info!("HTTP server stoppet.");
+                }
+                Ok(Err(e)) => {
+                    error!("HTTP server feilet: {}", e);
+                }
+                Err(join_error) => {
+                    error!("HTTP server task panicked: {}", join_error);
+                }
             }
         }
         result = reader => {
             match result {
-                Ok(()) => info!("Lesing av kafka topics stoppet."),
-                Err(e) => error!("Lesing av kafka topics stoppet grunnet feil: {}", e),
+                Ok(()) => {
+                    info!("Lesing av kafka topics stoppet.")
+                }
+                Err(e) => {
+                    error!("Lesing av kafka topics stoppet grunnet feil: {}", e)
+                }
             }
         }
         result = signal => {
             match result {
-                Ok(signal) => info!("Signal '{}' mottatt, avslutter....", signal),
-                Err(e) => error!("Avslutter grunnet feil i håndtering av SIGINT/SIGTERM: {}", e),
+                Ok(signal) => { 
+                    info!("Signal '{}' mottatt, avslutter....", signal)
+                }
+                Err(e) => {
+                    error!("Avslutter grunnet feil i håndtering av SIGINT/SIGTERM: {}", e)
+                }
             }
         }
     }
@@ -91,15 +102,8 @@ async fn read_all(
     stream: StreamConsumer<HwmRebalanceHandler>,
 ) -> Result<(), Box<dyn Error>> {
     loop {
-        match stream.recv().await {
-            Err(e) => {
-                error!("Kafka error: {}", e);
-                exit(2);
-            }
-            Ok(msg) => {
-                lagre_borrowed_message_i_db(pg_pool.clone(), msg).await?;
-            }
-        }
+        let msg = stream.recv().await?;
+        lagre_borrowed_message_i_db(pg_pool.clone(), msg).await?;
     }
 }
 

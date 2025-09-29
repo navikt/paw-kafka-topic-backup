@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::app_state::AppState;
 use axum::extract::State;
 use axum::{Router, http::StatusCode, routing::get};
@@ -5,7 +7,7 @@ use prometheus::{Encoder, TextEncoder};
 use tokio::task::JoinHandle;
 
 pub fn register_nais_http_apis(
-    app_state: AppState,
+    app_state: Arc<AppState>,
 ) -> JoinHandle<Result<(), Box<dyn std::error::Error + Send + Sync>>> {
     tokio::spawn(async move {
         let routes = routes(app_state);
@@ -15,7 +17,7 @@ pub fn register_nais_http_apis(
     })
 }
 
-fn routes(app_state: AppState) -> Router {
+fn routes(app_state: Arc<AppState>) -> Router {
     Router::new()
         .route("/internal/isAlive", get(is_alive))
         .route("/internal/isReady", get(is_ready))
@@ -24,24 +26,24 @@ fn routes(app_state: AppState) -> Router {
         .with_state(app_state)
 }
 
-async fn is_alive(State(app_state): State<AppState>) -> (StatusCode, &'static str) {
-    if app_state.is_alive {
+async fn is_alive(State(app_state): State<Arc<AppState>>) -> (StatusCode, &'static str) {
+    if app_state.get_is_alive() {
         (StatusCode::OK, "ok")
     } else {
         (StatusCode::SERVICE_UNAVAILABLE, "Service Unavailable")
     }
 }
 
-async fn is_ready(State(app_state): State<AppState>) -> (StatusCode, &'static str) {
-    if app_state.is_ready && app_state.has_started {
+async fn is_ready(State(app_state): State<Arc<AppState>>) -> (StatusCode, &'static str) {
+    if app_state.get_is_ready() {
         (StatusCode::OK, "ok")
     } else {
         (StatusCode::SERVICE_UNAVAILABLE, "Service Unavailable")
     }
 }
 
-async fn has_started(State(app_state): State<AppState>) -> (StatusCode, &'static str) {
-    if app_state.has_started {
+async fn has_started(State(app_state): State<Arc<AppState>>) -> (StatusCode, &'static str) {
+    if app_state.get_has_started() {
         (StatusCode::OK, "ok")
     } else {
         (StatusCode::SERVICE_UNAVAILABLE, "Service Unavailable")

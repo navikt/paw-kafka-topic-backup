@@ -2,7 +2,7 @@ use crate::database::hwm_statements::update_hwm;
 use crate::database::insert_data;
 use crate::kafka::headers::extract_headers_as_json;
 use crate::metrics;
-use log::info;
+use log::{info, trace};
 use rdkafka::Message;
 use rdkafka::message::BorrowedMessage;
 use sqlx::PgPool;
@@ -77,7 +77,7 @@ pub async fn lagre_melding_i_db(
         .await?;
         tx.commit().await?;
         
-        info!(
+        trace!(
             "Message processed: topic={}, partition={}, offset={}",
             topic,
             msg.partition,

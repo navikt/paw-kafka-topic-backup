@@ -35,6 +35,12 @@ fn get_kafka_config(
         .set("ssl.key.location", kafka_private_key_path)
         .set("ssl.certificate.location", kafka_certificate_path)
         .set("ssl.ca.location", kafka_ca_path)
+        // Memory optimization settings to prevent OOM in constrained environments
+        .set("fetch.max.bytes", "1048576")        // 1MB max fetch (down from 50MB)
+        .set("max.partition.fetch.bytes", "262144") // 256KB per partition (down from 1MB)
+        .set("queued.max.messages.kbytes", "32768") // 32MB internal queue (down from 1GB)
+        .set("receive.buffer.bytes", "32768")      // 32KB receive buffer (down from 64KB)
+        .set("send.buffer.bytes", "32768")         // 32KB send buffer
         .set_log_level(RDKafkaLogLevel::Info);
     Ok(config)
 }

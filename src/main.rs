@@ -26,6 +26,7 @@ use tokio::signal::unix::{SignalKind, signal};
 
 #[tokio::main]
 async fn main() {
+    info!("Starter applikasjon");
     let _ = match run_app().await {
         Ok(_) => {
             info!("Applikasjonen avsluttet uten feil");
@@ -34,6 +35,7 @@ async fn main() {
             error!("Feil ved kjøring av applikasjon, avslutter: {}", e);            
         }
     };
+    info!("Main funksjon ferdig, applikasjon avsluttet");
 }
 
 async fn run_app() -> Result<(), Box<dyn std::error::Error>> {

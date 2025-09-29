@@ -26,13 +26,35 @@ use tokio::signal::unix::{SignalKind, signal};
 
 #[tokio::main]
 async fn main() {
+    // Set up panic handler to log panics before they crash the process
+    std::panic::set_hook(Box::new(|panic_info| {
+        eprintln!("PANIC occurred: {}", panic_info);
+        if let Some(location) = panic_info.location() {
+            eprintln!("PANIC location: {}:{}:{}", location.file(), location.line(), location.column());
+        }
+        if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+            eprintln!("PANIC message: {}", s);
+        } else if let Some(s) = panic_info.payload().downcast_ref::<String>() {
+            eprintln!("PANIC message: {}", s);
+        }
+    }));
+
     info!("Starter applikasjon");
     let _ = match run_app().await {
         Ok(_) => {
             info!("Applikasjonen avsluttet uten feil");
         }
         Err(e) => {
-            error!("Feil ved kjøring av applikasjon, avslutter: {}", e);            
+            error!("Feil ved kjøring av applikasjon, avslutter: {}", e);
+            error!("Error details: {:?}", e);
+            error!("Error source chain:");
+            let mut source = e.source();
+            let mut level = 1;
+            while let Some(err) = source {
+                error!("  Level {}: {}", level, err);
+                source = err.source();
+                level += 1;
+            }
         }
     };
     info!("Main funksjon ferdig, applikasjon avsluttet");
@@ -62,35 +84,21 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     tokio::select! {
         result = http_server_task => {
             match result {
-                Ok(Ok(())) => {
-                    info!("HTTP server stoppet.");
-                }
-                Ok(Err(e)) => {
-                    error!("HTTP server feilet: {}", e);
-                }
-                Err(join_error) => {
-                    error!("HTTP server task panicked: {}", join_error);
-                }
+                Ok(Ok(())) => info!("HTTP server stoppet."),
+                Ok(Err(e)) => return Err(e),
+                Err(join_error) => return Err(Box::new(join_error)),
             }
         }
         result = reader => {
             match result {
-                Ok(()) => {
-                    info!("Lesing av kafka topics stoppet.")
-                }
-                Err(e) => {
-                    error!("Lesing av kafka topics stoppet grunnet feil: {}", e)
-                }
+                Ok(()) => info!("Lesing av kafka topics stoppet."),
+                Err(e) => return Err(e),
             }
         }
         result = signal => {
             match result {
-                Ok(signal) => { 
-                    info!("Signal '{}' mottatt, avslutter....", signal)
-                }
-                Err(e) => {
-                    error!("Avslutter grunnet feil i håndtering av SIGINT/SIGTERM: {}", e)
-                }
+                Ok(signal) => info!("Signal '{}' mottatt, avslutter....", signal),
+                Err(e) => return Err(e.into()),
             }
         }
     }

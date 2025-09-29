@@ -3,11 +3,15 @@ use std::error::Error;
 use testcontainers::{runners::AsyncRunner, ContainerAsync};
 use testcontainers_modules::postgres::Postgres;
 use chrono::DateTime;
+use std::sync::Mutex;
 
 // Import modules from the main crate
 use paw_kafka_topic_backup::{lagre_melding_i_db, KafkaMessage};
 use paw_kafka_topic_backup::database::hwm_statements::insert_hwm;
 use paw_kafka_topic_backup::metrics::{init_metrics, get_kafka_messages_processed_count};
+
+// Ensure metrics tests run serially to avoid registry conflicts
+static TEST_LOCK: Mutex<()> = Mutex::new(());
 
 /// Setup a test database container
 async fn setup_test_db() -> Result<(PgPool, ContainerAsync<Postgres>), Box<dyn Error>> {
@@ -63,6 +67,8 @@ fn create_test_kafka_message(topic: &str, partition: i32, offset: i64) -> KafkaM
 
 #[tokio::test]
 async fn test_kafka_messages_processed_counter() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    
     // Initialize metrics for this test
     init_metrics();
     
@@ -88,8 +94,8 @@ async fn test_kafka_messages_processed_counter() {
     // Check that above_hwm counter increased by 1, below_hwm unchanged
     let count_above_after_first = get_kafka_messages_processed_count(true);
     let count_below_after_first = get_kafka_messages_processed_count(false);
-    assert_eq!(count_above_after_first, initial_count_above + 1.0, "above_hwm counter should increase by 1 after first message");
-    assert_eq!(count_below_after_first, initial_count_below, "below_hwm counter should remain unchanged");
+    assert_eq!(count_above_after_first - initial_count_above, 1.0, "above_hwm counter should increase by 1 after first message");
+    assert_eq!(count_below_after_first - initial_count_below, 0.0, "below_hwm counter should remain unchanged");
 
     // Process second message
     let test_message_2 = create_test_kafka_message("metrics-test-topic", 0, 200);
@@ -99,12 +105,14 @@ async fn test_kafka_messages_processed_counter() {
     // Check that above_hwm counter increased by 2 total, below_hwm still unchanged
     let count_above_after_second = get_kafka_messages_processed_count(true);
     let count_below_after_second = get_kafka_messages_processed_count(false);
-    assert_eq!(count_above_after_second, initial_count_above + 2.0, "above_hwm counter should increase by 2 after second message");
-    assert_eq!(count_below_after_second, initial_count_below, "below_hwm counter should remain unchanged");
+    assert_eq!(count_above_after_second - initial_count_above, 2.0, "above_hwm counter should increase by 2 after second message");
+    assert_eq!(count_below_after_second - initial_count_below, 0.0, "below_hwm counter should remain unchanged");
 }
 
 #[tokio::test]
 async fn test_counter_not_incremented_for_skipped_messages() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    
     // Initialize metrics for this test
     init_metrics();
     
@@ -130,6 +138,6 @@ async fn test_counter_not_incremented_for_skipped_messages() {
     // Check that above_hwm counter did NOT increase but below_hwm counter DID increase
     let count_above_after_skip = get_kafka_messages_processed_count(true);
     let count_below_after_skip = get_kafka_messages_processed_count(false);
-    assert_eq!(count_above_after_skip, initial_count_above, "above_hwm counter should not increase for skipped messages");
-    assert_eq!(count_below_after_skip, initial_count_below + 1.0, "below_hwm counter should increase for skipped messages");
+    assert_eq!(count_above_after_skip - initial_count_above, 0.0, "above_hwm counter should not increase for skipped messages");
+    assert_eq!(count_below_after_skip - initial_count_below, 1.0, "below_hwm counter should increase for skipped messages");
 }

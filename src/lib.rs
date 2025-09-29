@@ -4,6 +4,7 @@ pub mod database;
 pub mod errors;
 pub mod kafka;
 pub mod logging;
+pub mod metrics;
 pub mod nais_http_apis;
 
 // Re-export the functions we want to test from their proper location

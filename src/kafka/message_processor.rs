@@ -1,6 +1,7 @@
 use crate::database::hwm_statements::update_hwm;
 use crate::database::insert_data;
 use crate::kafka::headers::extract_headers_as_json;
+use crate::metrics;
 use log::info;
 use rdkafka::Message;
 use rdkafka::message::BorrowedMessage;
@@ -75,6 +76,13 @@ pub async fn lagre_melding_i_db(
         )
         .await?;
         tx.commit().await?;
+        
+        info!(
+            "Message processed: topic={}, partition={}, offset={}",
+            topic,
+            msg.partition,
+            msg.offset
+        );
     } else {
         info!(
             "Below HWM, skipping insert: topic={}, partition={}, offset={}",
@@ -84,6 +92,10 @@ pub async fn lagre_melding_i_db(
         );
         tx.rollback().await?;
     }
+    
+    // Increment the Prometheus counter with above_hwm label
+    metrics::increment_kafka_messages_processed(hwm_ok);
+    
     Ok(())
 }
 

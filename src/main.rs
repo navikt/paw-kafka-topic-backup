@@ -4,6 +4,7 @@ mod database;
 mod errors;
 mod kafka;
 mod logging;
+mod metrics;
 mod nais_http_apis;
 
 use crate::app_state::AppState;
@@ -38,6 +39,11 @@ async fn main() {
 
 async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     init_log();
+    
+    // Initialize Prometheus metrics
+    crate::metrics::init_metrics();
+    info!("Prometheus metrics initialized");
+    
     let app_state = AppState {
         is_alive: true,
         is_ready: true,

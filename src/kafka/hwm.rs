@@ -1,6 +1,6 @@
-use std::{error::Error, process::exit, sync::Arc};
+use std::{error::Error, sync::Arc};
 
-use crate::{app_state::{self, AppState}, database::hwm_statements::{get_hwm, insert_hwm}};
+use crate::{app_state::{AppState}, database::hwm_statements::{get_hwm, insert_hwm}};
 use log::{error, info};
 use rdkafka::{
     ClientContext, Offset,
@@ -16,10 +16,10 @@ pub struct Hwm {
 }
 
 impl Hwm {
-    fn rdkafka_offset(&self) -> Offset {
+    fn seek_to_rdkafka_offset(&self) -> Offset {
         match self.hwm {
             -1 => Offset::Beginning,
-            _ => Offset::Offset(self.hwm),
+            _ => Offset::Offset(self.hwm + 1), //HWM er sist leste melding, i seek_to skal vi ha neste melding vi vil lese.
         }
     }
 }
@@ -48,8 +48,8 @@ impl HwmRebalanceHandler {
             let hwm = get_hwm(&mut tx, &topic.name, topic.partition).await?;
             let hwm = if hwm.is_none() {
                 info!(
-                    "HWM for {}::{} not found, inserting -1 as HWM in DB",
-                    topic.name, topic.partition
+                    "HWM for {}::{} not found, inserting {} as HWM in DB",
+                    topic.name, topic.partition, DEFAULT_HWM
                 );
                 insert_hwm(&mut tx, topic.name.clone(), topic.partition, DEFAULT_HWM).await?;
                 DEFAULT_HWM
@@ -92,7 +92,7 @@ impl ConsumerContext for HwmRebalanceHandler {
                         .seek(
                             &hwm.topic,
                             hwm.partition,
-                            hwm.rdkafka_offset(),
+                            hwm.seek_to_rdkafka_offset(),
                             std::time::Duration::from_secs(10),
                         )
                         .unwrap();

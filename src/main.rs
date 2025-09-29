@@ -80,6 +80,7 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     let reader = read_all(pg_pool.clone(), stream);
     let signal = await_signal();
+    app_state.set_has_started(true);
     info!("Alle tjenester startet, applikasjon kjører");
     tokio::select! {
         result = http_server_task => {
@@ -102,6 +103,7 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
+    app_state.set_is_alive(false);
     let _ = pg_pool.close().await;
     info!("Pg pool lukket");
     Ok(())

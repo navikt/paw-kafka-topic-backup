@@ -1,12 +1,8 @@
 use prometheus::{CounterVec, register_counter_vec};
 use std::sync::OnceLock;
 
-/// Counter for total Kafka messages processed with above_hwm label
 static KAFKA_MESSAGES_PROCESSED: OnceLock<CounterVec> = OnceLock::new();
 
-/// Initialize all Prometheus metrics
-/// This should be called once at application startup
-/// Safe to call multiple times - will only initialize once
 pub fn init_metrics() {
     KAFKA_MESSAGES_PROCESSED.get_or_init(|| {
         register_counter_vec!(
@@ -17,8 +13,6 @@ pub fn init_metrics() {
     });
 }
 
-/// Increment the counter for processed Kafka messages
-/// above_hwm: true if message was above HWM and processed, false if skipped
 pub fn increment_kafka_messages_processed(above_hwm: bool) {
     if let Some(counter_vec) = KAFKA_MESSAGES_PROCESSED.get() {
         counter_vec
@@ -27,8 +21,10 @@ pub fn increment_kafka_messages_processed(above_hwm: bool) {
     }
 }
 
-/// Get the current count of processed Kafka messages
-/// Useful for testing or debugging
+
+//Enkel funksjon brukt i tester for å verifisere antall tellinger
+#[doc(hidden)]
+#[allow(dead_code)]
 pub fn get_kafka_messages_processed_count(above_hwm: bool) -> f64 {
     KAFKA_MESSAGES_PROCESSED
         .get()

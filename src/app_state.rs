@@ -21,10 +21,6 @@ impl AppState {
         self.is_alive.store(value, std::sync::atomic::Ordering::Relaxed);
     }
 
-    pub fn set_is_ready(&self, value: bool) {
-        self.is_ready.store(value, std::sync::atomic::Ordering::Relaxed);
-    }
-
     pub fn set_has_started(&self, value: bool) {
         self.has_started.store(value, std::sync::atomic::Ordering::Relaxed);
     }

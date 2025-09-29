@@ -1,6 +1,7 @@
 use serde_json::Value;
 use sqlx::Postgres;
 use sqlx::Transaction;
+use chrono::{DateTime, Utc};
 
 use crate::database::INSERT_DATA;
 
@@ -9,10 +10,10 @@ pub async fn insert_data(
     kafka_topic: &str,
     kafka_partition: i32,
     kafka_offset: i64,
-    timestamp: i64,
+    timestamp: DateTime<Utc>,
     headers: Option<Value>,
-    record_key: &[u8],
-    record_value: &[u8],
+    record_key: Vec<u8>,
+    record_value: Vec<u8>,
 ) -> Result<u64, sqlx::Error> {
     let result = sqlx::query(INSERT_DATA)
         .bind(kafka_topic)

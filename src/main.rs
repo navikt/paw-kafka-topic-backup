@@ -113,9 +113,15 @@ async fn read_all(
     pg_pool: PgPool,
     stream: StreamConsumer<HwmRebalanceHandler>,
 ) -> Result<(), Box<dyn Error>> {
+    let mut message_count = 0;
     loop {
         let msg = stream.recv().await?;
         lagre_borrowed_message_i_db(pg_pool.clone(), msg).await?;
+        
+        message_count += 1;
+        if message_count % 1000 == 0 {
+            info!("Processed {} messages", message_count);
+        }
     }
 }
 

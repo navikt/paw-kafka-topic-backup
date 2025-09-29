@@ -35,16 +35,14 @@ fn get_kafka_config(
         .set("ssl.key.location", kafka_private_key_path)
         .set("ssl.certificate.location", kafka_certificate_path)
         .set("ssl.ca.location", kafka_ca_path)
-        // Ultra-aggressive memory settings for production OOM issues
-        .set("fetch.max.bytes", "65536")          // 64KB max fetch (very small)
+        // Ultra-aggressive memory settings using only valid rdkafka properties
+        .set("fetch.max.bytes", "65536")          // 64KB max fetch
         .set("max.partition.fetch.bytes", "32768") // 32KB per partition
-        .set("queued.max.messages.kbytes", "1024") // 1MB internal queue (minimal)
+        .set("queued.max.messages.kbytes", "1024") // 1MB internal queue
         .set("queued.min.messages", "1")          // Min messages in queue
         .set("queued.max.messages", "100")        // Max 100 messages in queue
-        .set("receive.buffer.bytes", "4096")      // 4KB receive buffer
-        .set("send.buffer.bytes", "4096")         // 4KB send buffer
-        .set("socket.receive.buffer.bytes", "4096") // 4KB socket buffer
-        .set("socket.send.buffer.bytes", "4096")   // 4KB socket buffer
+        .set("socket.receive.buffer.bytes", "4096") // 4KB socket receive buffer
+        .set("socket.send.buffer.bytes", "4096")   // 4KB socket send buffer
         .set("fetch.min.bytes", "1")              // Don't wait for much data
         .set("fetch.wait.max.ms", "100")          // Don't wait long for data
         .set_log_level(RDKafkaLogLevel::Info);

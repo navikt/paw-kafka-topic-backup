@@ -8,7 +8,6 @@ use rdkafka::{
     topic_partition_list::TopicPartitionListElem,
 };
 use sqlx::PgPool;
-use tokio::runtime::Handle;
 
 pub struct Hwm {
     topic: String,
@@ -62,6 +61,7 @@ impl HwmRebalanceHandler {
                 hwm: hwm,
             });
         }
+        tx.commit().await?;
         Ok(hwms)
     }
 }
@@ -81,7 +81,7 @@ impl ConsumerContext for HwmRebalanceHandler {
                     })
                     .collect();
                 
-                let hwm = Handle::current().block_on(self.get_hwms(topics)).unwrap();                
+                let hwm = futures::executor::block_on(self.get_hwms(topics)).unwrap();                
                 hwm.iter().for_each(|hwm| {
                     info!(
                         "Assigned: topic: {}, partition: {}, hwm: {}",

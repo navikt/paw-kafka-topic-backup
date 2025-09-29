@@ -1508,6 +1508,7 @@ dependencies = [
  "axum",
  "base64 0.22.1",
  "chrono",
+ "futures",
  "log",
  "log4rs",
  "prometheus",

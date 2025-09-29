@@ -39,10 +39,10 @@ spec:
     pool: {{ kafka }}
   resources:
     limits:
-      memory: 10Mi
+      memory: 20Mi
     requests:
-      memory: 10Mi
-      cpu: 5m
+      memory: 20Mi
+      cpu: 50m
   gcp:
     sqlInstances:
       - type: POSTGRES_17

@@ -21,17 +21,3 @@ pub fn increment_kafka_messages_processed(above_hwm: bool, topic: String, partit
             .inc();
     }
 }
-
-//Enkel funksjon brukt i tester for å verifisere antall tellinger
-#[doc(hidden)]
-#[allow(dead_code)]
-pub fn get_kafka_messages_processed_count(above_hwm: bool) -> f64 {
-    KAFKA_MESSAGES_PROCESSED
-        .get()
-        .map(|counter_vec| {
-            counter_vec
-                .with_label_values(&[&above_hwm.to_string()])
-                .get()
-        })
-        .unwrap_or(0.0)
-}

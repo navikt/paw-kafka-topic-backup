@@ -4,7 +4,7 @@ use crate::database::{INSERT_HWM, QUERY_HWM, UPDATE_HWM};
 
 pub async fn update_hwm(
     tx: &mut Transaction<'_, Postgres>,
-    topic: String,
+    topic: &str,
     partition: i32,
     new_hwm: i64,
 ) -> Result<bool, Box<dyn std::error::Error>> {
@@ -19,12 +19,12 @@ pub async fn update_hwm(
 
 pub async fn insert_hwm(
     tx: &mut Transaction<'_, Postgres>,
-    topic: String,
+    topic: &str,
     partition: i32,
     hwm: i64,
 ) -> Result<(), Box<dyn std::error::Error>> {
     sqlx::query(INSERT_HWM)
-        .bind(&topic)
+        .bind(topic)
         .bind(partition)
         .bind(hwm)
         .execute(&mut **tx)
@@ -34,11 +34,11 @@ pub async fn insert_hwm(
 
 pub async fn get_hwm(
     tx: &mut Transaction<'_, Postgres>,
-    topic: &String,
+    topic: &str,
     partition: i32,
 ) -> Result<Option<i64>, Box<dyn std::error::Error>> {
     let hwm: Option<i64> = sqlx::query_scalar(QUERY_HWM)
-        .bind(&topic)
+        .bind(topic)
         .bind(partition)
         .fetch_optional(&mut **tx)
         .await?;

@@ -8,4 +8,4 @@ pub mod metrics;
 pub mod nais_http_apis;
 
 // Re-export the functions we want to test from their proper location
-pub use kafka::message_processor::{lagre_melding_i_db, lagre_borrowed_message_i_db, KafkaMessage};
+pub use kafka::message_processor::{prosesser_melding, KafkaMessage};

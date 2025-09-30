@@ -51,7 +51,7 @@ impl HwmRebalanceHandler {
                     "HWM for {}::{} not found, inserting {} as HWM in DB",
                     topic.name, topic.partition, DEFAULT_HWM
                 );
-                insert_hwm(&mut tx, topic.name.clone(), topic.partition, DEFAULT_HWM).await?;
+                insert_hwm(&mut tx, &topic.name, topic.partition, DEFAULT_HWM).await?;
                 DEFAULT_HWM
             } else {
                 hwm.unwrap()

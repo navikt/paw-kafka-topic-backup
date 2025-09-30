@@ -49,7 +49,7 @@ async fn test_insert_hwm_data() {
     let partition = 0i32;
     let hwm = 100i64;
 
-    let result = insert_hwm(&mut tx, topic.clone(), partition, hwm).await;
+    let result = insert_hwm(&mut tx, &topic, partition, hwm).await;
     assert!(
         result.is_ok(),
         "Failed to insert HWM data: {:?}",
@@ -99,14 +99,14 @@ async fn test_update_hwm_data() {
 
     // Insert initial data
     let mut tx = pool.begin().await.expect("Failed to start transaction");
-    insert_hwm(&mut tx, topic.clone(), partition, initial_hwm)
+    insert_hwm(&mut tx, &topic, partition, initial_hwm)
         .await
         .expect("Failed to insert initial test data");
     tx.commit().await.expect("Failed to commit transaction");
 
     // Update the HWM using hwm_statements function (should succeed because new_hwm > old_hwm)
     let mut tx = pool.begin().await.expect("Failed to start transaction");
-    let update_result = update_hwm(&mut tx, topic.clone(), partition, updated_hwm).await;
+    let update_result = update_hwm(&mut tx, &topic, partition, updated_hwm).await;
     tx.commit().await.expect("Failed to commit transaction");
 
     assert!(
@@ -143,14 +143,14 @@ async fn test_update_hwm_no_change_when_lower() {
 
     // Insert initial data
     let mut tx = pool.begin().await.expect("Failed to start transaction");
-    insert_hwm(&mut tx, topic.clone(), partition, initial_hwm)
+    insert_hwm(&mut tx, &topic, partition, initial_hwm)
         .await
         .expect("Failed to insert initial test data");
     tx.commit().await.expect("Failed to commit transaction");
 
     // Try to update with lower HWM using hwm_statements function
     let mut tx = pool.begin().await.expect("Failed to start transaction");
-    let update_result = update_hwm(&mut tx, topic.clone(), partition, lower_hwm).await;
+    let update_result = update_hwm(&mut tx, &topic, partition, lower_hwm).await;
     tx.commit().await.expect("Failed to commit transaction");
 
     assert!(update_result.is_ok());
@@ -190,7 +190,7 @@ async fn test_multiple_topics_and_partitions() {
 
     for (topic, partition, hwm) in &test_data {
         let mut tx = pool.begin().await.expect("Failed to start transaction");
-        insert_hwm(&mut tx, topic.clone(), *partition, *hwm)
+        insert_hwm(&mut tx, &topic, *partition, *hwm)
             .await
             .expect("Failed to insert test data");
         tx.commit().await.expect("Failed to commit transaction");
@@ -226,7 +226,7 @@ async fn test_transaction_rollback() {
 
     // Start a transaction and insert data but don't commit
     let mut tx = pool.begin().await.expect("Failed to start transaction");
-    insert_hwm(&mut tx, topic.clone(), partition, hwm)
+    insert_hwm(&mut tx, &topic, partition, hwm)
         .await
         .expect("Failed to insert test data");
 

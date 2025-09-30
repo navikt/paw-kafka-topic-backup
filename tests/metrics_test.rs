@@ -6,7 +6,7 @@ use chrono::DateTime;
 use std::sync::Mutex;
 
 // Import modules from the main crate
-use paw_kafka_topic_backup::{lagre_melding_i_db, KafkaMessage};
+use paw_kafka_topic_backup::{prosesser_melding, KafkaMessage};
 use paw_kafka_topic_backup::database::hwm_statements::insert_hwm;
 use paw_kafka_topic_backup::metrics::{init_metrics, get_kafka_messages_processed_count};
 
@@ -78,7 +78,7 @@ async fn test_kafka_messages_processed_counter() {
 
     // Insert initial HWM record with a lower offset so our test messages will be processed
     let mut tx = pool.begin().await.expect("Failed to start transaction");
-    let _ = insert_hwm(&mut tx, "metrics-test-topic".to_string(), 0, 50).await
+    let _ = insert_hwm(&mut tx, "metrics-test-topic", 0, 50).await
         .expect("Failed to insert initial HWM");
     tx.commit().await.expect("Failed to commit initial HWM");
 
@@ -88,7 +88,7 @@ async fn test_kafka_messages_processed_counter() {
     
     // Process first message
     let test_message_1 = create_test_kafka_message("metrics-test-topic", 0, 100);
-    lagre_melding_i_db(pool.clone(), test_message_1).await
+    prosesser_melding(pool.clone(), test_message_1).await
         .expect("First message should be processed successfully");
 
     // Check that above_hwm counter increased by 1, below_hwm unchanged
@@ -99,7 +99,7 @@ async fn test_kafka_messages_processed_counter() {
 
     // Process second message
     let test_message_2 = create_test_kafka_message("metrics-test-topic", 0, 200);
-    lagre_melding_i_db(pool.clone(), test_message_2).await
+    prosesser_melding(pool.clone(), test_message_2).await
         .expect("Second message should be processed successfully");
 
     // Check that above_hwm counter increased by 2 total, below_hwm still unchanged
@@ -122,7 +122,7 @@ async fn test_counter_not_incremented_for_skipped_messages() {
 
     // Insert initial HWM record with the SAME offset as our test message
     let mut tx = pool.begin().await.expect("Failed to start transaction");
-    let _ = insert_hwm(&mut tx, "skip-test-topic".to_string(), 0, 100).await
+    let _ = insert_hwm(&mut tx, "skip-test-topic", 0, 100).await
         .expect("Failed to insert initial HWM");
     tx.commit().await.expect("Failed to commit initial HWM");
 
@@ -132,7 +132,7 @@ async fn test_counter_not_incremented_for_skipped_messages() {
 
     // Try to process a message with the same offset (should be skipped)
     let test_message = create_test_kafka_message("skip-test-topic", 0, 100);
-    lagre_melding_i_db(pool.clone(), test_message).await
+    prosesser_melding(pool.clone(), test_message).await
         .expect("Message processing should succeed even when skipped");
 
     // Check that above_hwm counter did NOT increase but below_hwm counter DID increase

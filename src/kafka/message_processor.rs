@@ -9,26 +9,18 @@ use sqlx::PgPool;
 use std::error::Error;
 use chrono::{DateTime, Utc};
 
-/// Represents a Kafka message with owned data
-/// 
-/// This struct owns all the message data, making it safe to pass
-/// across async boundaries and store for processing.
 #[derive(Debug, Clone)]
 pub struct KafkaMessage {
     pub topic: String,
     pub partition: i32,
     pub offset: i64,
     pub headers: Option<serde_json::Value>,
-    pub key: Vec<u8>,        // Vec<u8> for owned data
-    pub payload: Vec<u8>,    // Vec<u8> for owned data
-    pub timestamp: DateTime<Utc>,  // Proper timestamp type
+    pub key: Vec<u8>,
+    pub payload: Vec<u8>,
+    pub timestamp: DateTime<Utc>,
 }
 
 impl KafkaMessage {
-    /// Convert a BorrowedMessage to an owned KafkaMessage
-    /// 
-    /// This performs the conversion from &[u8] (borrowed) to Vec<u8> (owned)
-    /// for the key and payload data, and from millis to DateTime<Utc>.
     pub fn from_borrowed_message(msg: BorrowedMessage<'_>) -> Result<Self, Box<dyn Error>> {
         let timestamp_millis = msg.timestamp().to_millis().unwrap_or(0);
         let timestamp = DateTime::from_timestamp_millis(timestamp_millis)
@@ -39,25 +31,23 @@ impl KafkaMessage {
             partition: msg.partition(),
             offset: msg.offset(),
             headers: extract_headers_as_json(&msg)?,
-            key: msg.key().unwrap_or(&[]).to_vec(),        // &[u8] -> Vec<u8>
-            payload: msg.payload().unwrap_or(&[]).to_vec(), // &[u8] -> Vec<u8>
+            key: msg.key().unwrap_or(&[]).to_vec(),
+            payload: msg.payload().unwrap_or(&[]).to_vec(),
             timestamp,
         })
     }
 }
 
-pub async fn lagre_melding_i_db(
+pub async fn prosesser_melding(
     pg_pool: PgPool,
     msg: KafkaMessage,
 ) -> Result<(), Box<dyn Error>> {
     let mut tx = pg_pool.begin().await?;
-    
-    // Borrow the topic string to avoid move issues
     let topic = &msg.topic;
     
     let hwm_ok = update_hwm(
         &mut tx,
-        msg.topic.clone(),
+        topic,
         msg.partition,
         msg.offset,
     )
@@ -91,18 +81,7 @@ pub async fn lagre_melding_i_db(
             msg.offset
         );
         tx.rollback().await?;
-    }
-    
-    // Increment the Prometheus counter with above_hwm label
-    metrics::increment_kafka_messages_processed(hwm_ok);
-    
+    }    
+    metrics::increment_kafka_messages_processed(hwm_ok, topic.clone(), msg.partition);    
     Ok(())
-}
-
-pub async fn lagre_borrowed_message_i_db(
-    pg_pool: PgPool,
-    msg: BorrowedMessage<'_>,
-) -> Result<(), Box<dyn Error>> {
-    let kafka_msg = KafkaMessage::from_borrowed_message(msg)?;
-    lagre_melding_i_db(pg_pool, kafka_msg).await
 }

@@ -9,7 +9,8 @@ pub fn init_metrics() {
             "kafka_messages_processed_total",
             "Total number of Kafka messages processed",
             &["above_hwm", "topic", "partition"]
-        ).expect("Failed to register kafka_messages_processed_total counter")
+        )
+        .expect("Failed to register kafka_messages_processed_total counter")
     });
 }
 
@@ -20,7 +21,6 @@ pub fn increment_kafka_messages_processed(above_hwm: bool, topic: String, partit
             .inc();
     }
 }
-
 
 //Enkel funksjon brukt i tester for å verifisere antall tellinger
 #[doc(hidden)]

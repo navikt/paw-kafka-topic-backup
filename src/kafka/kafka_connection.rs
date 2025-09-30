@@ -3,7 +3,10 @@ use std::{error::Error, sync::Arc};
 use rdkafka::consumer::{Consumer, StreamConsumer};
 use sqlx::PgPool;
 
-use crate::{app_state::AppState, kafka::{config::ApplicationKafkaConfig, hwm::HwmRebalanceHandler}};
+use crate::{
+    app_state::AppState,
+    kafka::{config::ApplicationKafkaConfig, hwm::HwmRebalanceHandler},
+};
 
 pub fn create_kafka_consumer(
     app_state: Arc<AppState>,

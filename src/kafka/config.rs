@@ -37,15 +37,15 @@ fn get_kafka_config(
         .set("ssl.ca.location", kafka_ca_path)
         // Memory-constrained settings using only valid rdkafka properties
         // Note: fetch.max.bytes must be >= message.max.bytes (default 1MB)
-        .set("message.max.bytes", "65536")        // 64KB max message size
-        .set("fetch.max.bytes", "131072")         // 128KB max fetch (must be >= message.max.bytes)
-        .set("fetch.message.max.bytes", "32768")  // 32KB max per partition
+        .set("message.max.bytes", "65536") // 64KB max message size
+        .set("fetch.max.bytes", "131072") // 128KB max fetch (must be >= message.max.bytes)
+        .set("fetch.message.max.bytes", "32768") // 32KB max per partition
         .set("queued.max.messages.kbytes", "1024") // 1MB internal queue size
-        .set("queued.min.messages", "1")          // Min messages in queue  
+        .set("queued.min.messages", "1") // Min messages in queue
         .set("socket.receive.buffer.bytes", "4096") // 4KB socket receive buffer
-        .set("socket.send.buffer.bytes", "4096")   // 4KB socket send buffer
-        .set("fetch.min.bytes", "1")              // Don't wait for much data
-        .set("fetch.wait.max.ms", "100")          // Don't wait long for data
+        .set("socket.send.buffer.bytes", "4096") // 4KB socket send buffer
+        .set("fetch.min.bytes", "1") // Don't wait for much data
+        .set("fetch.wait.max.ms", "100") // Don't wait long for data
         .set("receive.message.max.bytes", "200000") // 200KB max response (must be > fetch.max.bytes + 512)
         .set_log_level(RDKafkaLogLevel::Info);
     Ok(config)

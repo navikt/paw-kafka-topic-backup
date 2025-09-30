@@ -1,6 +1,9 @@
 use std::{error::Error, sync::Arc};
 
-use crate::{app_state::{AppState}, database::hwm_statements::{get_hwm, insert_hwm}};
+use crate::{
+    app_state::AppState,
+    database::hwm_statements::{get_hwm, insert_hwm},
+};
 use log::{error, info};
 use rdkafka::{
     ClientContext, Offset,
@@ -31,7 +34,7 @@ pub struct Topic {
 
 pub struct HwmRebalanceHandler {
     pub pg_pool: PgPool,
-    pub app_state: Arc<AppState>
+    pub app_state: Arc<AppState>,
 }
 
 impl Default for HwmRebalanceHandler {
@@ -81,8 +84,8 @@ impl ConsumerContext for HwmRebalanceHandler {
                         partition: elem.partition(),
                     })
                     .collect();
-                
-                let hwm = futures::executor::block_on(self.get_hwms(topics)).unwrap();                
+
+                let hwm = futures::executor::block_on(self.get_hwms(topics)).unwrap();
                 hwm.iter().for_each(|hwm| {
                     info!(
                         "Assigned: topic: {}, partition: {}, hwm: {}",

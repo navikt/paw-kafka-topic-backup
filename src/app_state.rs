@@ -7,7 +7,6 @@ pub struct AppState {
     pub has_started: AtomicBool,
 }
 
-
 impl AppState {
     pub fn new() -> Self {
         AppState {
@@ -18,11 +17,13 @@ impl AppState {
     }
 
     pub fn set_is_alive(&self, value: bool) {
-        self.is_alive.store(value, std::sync::atomic::Ordering::Relaxed);
+        self.is_alive
+            .store(value, std::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn set_has_started(&self, value: bool) {
-        self.has_started.store(value, std::sync::atomic::Ordering::Relaxed);
+        self.has_started
+            .store(value, std::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn get_is_alive(&self) -> bool {
@@ -35,5 +36,5 @@ impl AppState {
 
     pub fn get_has_started(&self) -> bool {
         self.has_started.load(std::sync::atomic::Ordering::Relaxed)
-    }    
+    }
 }

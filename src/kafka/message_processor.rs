@@ -2,12 +2,12 @@ use crate::database::hwm_statements::update_hwm;
 use crate::database::insert_data;
 use crate::kafka::headers::extract_headers_as_json;
 use crate::metrics;
+use chrono::{DateTime, Utc};
 use log::{info, trace};
 use rdkafka::Message;
 use rdkafka::message::BorrowedMessage;
 use sqlx::PgPool;
 use std::error::Error;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone)]
 pub struct KafkaMessage {
@@ -25,7 +25,7 @@ impl KafkaMessage {
         let timestamp_millis = msg.timestamp().to_millis().unwrap_or(0);
         let timestamp = DateTime::from_timestamp_millis(timestamp_millis)
             .ok_or_else(|| format!("Invalid timestamp: {}", timestamp_millis))?;
-            
+
         Ok(KafkaMessage {
             topic: msg.topic().to_string(),
             partition: msg.partition(),
@@ -38,21 +38,12 @@ impl KafkaMessage {
     }
 }
 
-pub async fn prosesser_melding(
-    pg_pool: PgPool,
-    msg: KafkaMessage,
-) -> Result<(), Box<dyn Error>> {
+pub async fn prosesser_melding(pg_pool: PgPool, msg: KafkaMessage) -> Result<(), Box<dyn Error>> {
     let mut tx = pg_pool.begin().await?;
     let topic = &msg.topic;
-    
-    let hwm_ok = update_hwm(
-        &mut tx,
-        topic,
-        msg.partition,
-        msg.offset,
-    )
-    .await?;
-    
+
+    let hwm_ok = update_hwm(&mut tx, topic, msg.partition, msg.offset).await?;
+
     if hwm_ok {
         let _ = insert_data::insert_data(
             &mut tx,
@@ -66,22 +57,18 @@ pub async fn prosesser_melding(
         )
         .await?;
         tx.commit().await?;
-        
+
         trace!(
             "Message processed: topic={}, partition={}, offset={}",
-            topic,
-            msg.partition,
-            msg.offset
+            topic, msg.partition, msg.offset
         );
     } else {
         info!(
             "Below HWM, skipping insert: topic={}, partition={}, offset={}",
-            topic,
-            msg.partition,
-            msg.offset
+            topic, msg.partition, msg.offset
         );
         tx.rollback().await?;
-    }    
-    metrics::increment_kafka_messages_processed(hwm_ok, topic.clone(), msg.partition);    
+    }
+    metrics::increment_kafka_messages_processed(hwm_ok, topic.clone(), msg.partition);
     Ok(())
 }

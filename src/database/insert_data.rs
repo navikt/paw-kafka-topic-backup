@@ -1,7 +1,7 @@
+use chrono::{DateTime, Utc};
 use serde_json::Value;
 use sqlx::Postgres;
 use sqlx::Transaction;
-use chrono::{DateTime, Utc};
 
 use crate::database::INSERT_DATA;
 

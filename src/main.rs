@@ -13,8 +13,8 @@ use crate::database::init_pg_pool::init_db;
 use crate::kafka::config::ApplicationKafkaConfig;
 use crate::kafka::hwm::HwmRebalanceHandler;
 use crate::kafka::kafka_connection::create_kafka_consumer;
-use crate::kafka::message_processor::prosesser_melding;
 use crate::kafka::message_processor::KafkaMessage;
+use crate::kafka::message_processor::prosesser_melding;
 use crate::logging::init_log;
 use crate::nais_http_apis::register_nais_http_apis;
 use log::error;
@@ -31,7 +31,12 @@ async fn main() {
     std::panic::set_hook(Box::new(|panic_info| {
         eprintln!("PANIC occurred: {}", panic_info);
         if let Some(location) = panic_info.location() {
-            eprintln!("PANIC location: {}:{}:{}", location.file(), location.line(), location.column());
+            eprintln!(
+                "PANIC location: {}:{}:{}",
+                location.file(),
+                location.line(),
+                location.column()
+            );
         }
         if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
             eprintln!("PANIC message: {}", s);
@@ -63,11 +68,11 @@ async fn main() {
 
 async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     init_log();
-    
+
     // Initialize Prometheus metrics
     crate::metrics::init_metrics();
     info!("Prometheus metrics initialized");
-    
+
     let app_state = Arc::new(AppState::new());
     let http_server_task = register_nais_http_apis(app_state.clone());
     info!("HTTP server startet");

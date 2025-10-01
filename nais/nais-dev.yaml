@@ -48,5 +48,10 @@ spec:
       - type: POSTGRES_17
         tier: db-f1-micro
         databases:
-          - name: topicbackup
+          - name: topicbackuphdd
+        diskType: HDD
+        highAvailability: false
+        pointInTimeRecovery: false
+        autoStorageIncrease: true
+        insights:enabled: false
         

@@ -63,7 +63,7 @@ pub fn get_database_config() -> Result<DatabaseConfig, AppError> {
 }
 
 fn get_db_env(var: &str) -> Result<String, AppError> {
-    let key = format!("NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUP_{}", var);
+    let key = format!("NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUPHDD_{}", var);
     std::env::var(&key).map_err(|_| AppError {
         domain: GET_ENV_VAR.to_string(),
         value: format!("Failed to get env var {}", key),

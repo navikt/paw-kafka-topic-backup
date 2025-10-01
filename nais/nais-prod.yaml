@@ -46,6 +46,11 @@ spec:
   gcp:
     sqlInstances:
       - type: POSTGRES_17
-        tier: db-custom-1-6144
+        tier: db-custom-1-3840
         databases:
-          - name: topicbackup
+          - name: topicbackuphdd
+        diskType: HDD
+        highAvailability: false
+        pointInTimeRecovery: false
+        autoStorageIncrease: true
+        insights:enabled: false

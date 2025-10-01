@@ -43,15 +43,15 @@ spec:
     requests:
       memory: 32Mi
       cpu: 20m
-  # gcp:
-  #   sqlInstances:
-  #     - type: POSTGRES_17
-  #       tier: db-custom-1-3840
-  #       databases:
-  #         - name: topicbackuphdd
-  #       diskType: HDD
-  #       highAvailability: false
-  #       pointInTimeRecovery: false
-  #       diskAutoresize: true
-  #       insights:
-  #         enabled: false
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_17
+        tier: db-custom-1-3840
+        databases:
+          - name: topicbackuphdd
+        diskType: HDD
+        highAvailability: false
+        pointInTimeRecovery: false
+        diskAutoresize: true
+        insights:
+          enabled: false

@@ -52,5 +52,6 @@ spec:
         diskType: HDD
         highAvailability: false
         pointInTimeRecovery: false
-        autoStorageIncrease: true
-        insights:enabled: false
+        diskAutoresize: true
+        insights:
+          enabled: false

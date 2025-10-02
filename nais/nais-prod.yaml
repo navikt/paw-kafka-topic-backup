@@ -11,7 +11,7 @@ spec:
   replicas:
     min: 0
     max: 0
-    env:
+  env:
     - name: PGSSLMODE
       value: "VerifyFull"
     - name: PGSSLROOTCERT

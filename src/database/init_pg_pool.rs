@@ -1,4 +1,3 @@
-use crate::database::create_tables;
 use crate::database::database_config::{DatabaseConfig, get_database_config};
 use crate::errors::{AppError, DATABASE_CONNECTION};
 use log::info;
@@ -30,6 +29,6 @@ pub async fn init_db() -> Result<PgPool, Box<dyn Error>> {
     info!("Database config: {:?}", db_config);
     let pg_pool = get_pg_pool(&db_config).await?;
     info!("Postgres pool opprettet");
-    let _ = create_tables(&pg_pool).await?;
+    let _ = sqlx::migrate!("./migrations").run(&pg_pool).await?;
     Ok(pg_pool)
 }

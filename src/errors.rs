@@ -9,7 +9,6 @@ pub struct AppError {
 
 pub const GET_ENV_VAR: &str = "get_env_var";
 pub const DATABASE_CONNECTION: &str = "database_connection";
-pub const DATABASE_CREATE_TABLE: &str = "database_create_table";
 
 impl Error for AppError {}
 

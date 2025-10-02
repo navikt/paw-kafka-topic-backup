@@ -8,7 +8,6 @@ mod metrics;
 mod nais_http_apis;
 
 use crate::app_state::AppState;
-use crate::database::create_tables;
 use crate::database::init_pg_pool::init_db;
 use crate::kafka::config::ApplicationKafkaConfig;
 use crate::kafka::hwm::HwmRebalanceHandler;
@@ -77,7 +76,6 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     let http_server_task = register_nais_http_apis(app_state.clone());
     info!("HTTP server startet");
     let pg_pool = init_db().await?;
-    let _ = create_tables(&pg_pool).await?;
     let stream = create_kafka_consumer(
         app_state.clone(),
         pg_pool.clone(),

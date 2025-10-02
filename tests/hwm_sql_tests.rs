@@ -28,10 +28,7 @@ async fn setup_test_db() -> Result<(PgPool, ContainerAsync<Postgres>), Box<dyn E
     let pool = PgPool::connect(&connection_string).await?;
 
     // Create tables manually - need to import the SQL constant
-    sqlx::query(paw_kafka_topic_backup::database::sqls::CREATE_HWM_TABLE)
-        .execute(&pool)
-        .await?;
-
+    sqlx::migrate!("./migrations").run(&pool).await?;
     Ok((pool, postgres_container))
 }
 

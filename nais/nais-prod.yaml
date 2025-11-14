@@ -57,3 +57,8 @@ spec:
         diskAutoresize: true
         insights:
           enabled: false
+        flags:
+          - name: cloudsql.enable_pgaudit
+            value: "true"
+          - name: pgaudit.log
+            value: "write"

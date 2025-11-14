@@ -39,9 +39,9 @@ spec:
     pool: {{ kafka }}
   resources:
     limits:
-      memory: 32Mi
+      memory: 16Mi
     requests:
-      memory: 32Mi
+      memory: 16Mi
       cpu: 10m
   gcp:
     sqlInstances:

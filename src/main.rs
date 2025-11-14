@@ -8,6 +8,7 @@ mod metrics;
 mod nais_http_apis;
 
 use crate::app_state::AppState;
+use crate::config_utils::get_env::get_env;
 use crate::database::init_pg_pool::init_db;
 use crate::kafka::config::ApplicationKafkaConfig;
 use crate::kafka::hwm::HwmRebalanceHandler;
@@ -83,7 +84,7 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         &[
             "paw.arbeidssoker-hendelseslogg-v1",
             "paw.arbeidssoker-bekreftelse-v1",
-            "paw.arbeidssoker-bekreftelse-paavegneav-v2",
+            get_env("PAA_VEGNE_AV_TOPIC")?.as_str(),
         ],
     )?;
     let reader = read_all(pg_pool.clone(), stream);

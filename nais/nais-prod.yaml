@@ -20,6 +20,8 @@ spec:
       value: "$(NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUPHDD_SSLCERT)"
     - name: PGSSLKEY
       value: "$(NAIS_DATABASE_PAW_KAFKA_TOPIC_BACKUP_TOPICBACKUPHDD_SSLKEY)"
+    - name: PAA_VEGNE_AV_TOPIC
+      value: "paw.arbeidssoker-bekreftelse-paavegneav-v2"
   liveness:
     path: /internal/isAlive
     initialDelay: 10

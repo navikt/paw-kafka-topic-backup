@@ -80,7 +80,11 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         app_state.clone(),
         pg_pool.clone(),
         ApplicationKafkaConfig::new("hedelselogg_backup2_v1", "ssl"),
-        &["paw.arbeidssoker-hendelseslogg-v1"],
+        &[
+            "paw.arbeidssoker-hendelseslogg-v1",
+            "paw.arbeidssoker-bekreftelse-v1",
+            "paw.arbeidssoker-bekreftelse-paavegneav-v2",
+        ],
     )?;
     let reader = read_all(pg_pool.clone(), stream);
     let signal = await_signal();

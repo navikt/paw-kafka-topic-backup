@@ -1,4 +1,5 @@
 mod app_state;
+mod config;
 mod config_utils;
 mod database;
 mod errors;

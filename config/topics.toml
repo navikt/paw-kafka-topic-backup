@@ -1,0 +1,5 @@
+topics = [
+    "paw.arbeidssoker-hendelseslogg-v1",
+    "paw.arbeidssoker-bekreftelse-v1",
+    $PAA_VEGNE_AV_TOPIC",
+]

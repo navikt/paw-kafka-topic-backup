@@ -1,4 +1,5 @@
 pub mod app_state;
+pub mod config;
 pub mod config_utils;
 pub mod database;
 pub mod errors;

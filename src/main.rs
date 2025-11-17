@@ -9,7 +9,6 @@ mod metrics;
 mod nais_http_apis;
 
 use crate::app_state::AppState;
-use crate::config_utils::get_env::get_env;
 use crate::database::init_pg_pool::init_db;
 use crate::kafka::config::ApplicationKafkaConfig;
 use crate::kafka::hwm::HwmRebalanceHandler;
@@ -69,7 +68,8 @@ async fn main() {
 
 async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
     init_log();
-
+    let config = config::Config::from_default_file()?;
+    info!("Konfigurasjon lastet: {:?}", config);
     // Initialize Prometheus metrics
     crate::metrics::init_metrics();
     info!("Prometheus metrics initialized");
@@ -82,11 +82,7 @@ async fn run_app() -> Result<(), Box<dyn std::error::Error>> {
         app_state.clone(),
         pg_pool.clone(),
         ApplicationKafkaConfig::new("hedelselogg_backup2_v1", "ssl"),
-        &[
-            "paw.arbeidssoker-hendelseslogg-v1",
-            "paw.arbeidssoker-bekreftelse-v1",
-            get_env("PAA_VEGNE_AV_TOPIC")?.as_str(),
-        ],
+        &config.topics_as_str_slice(),
     )?;
     let reader = read_all(pg_pool.clone(), stream);
     let signal = await_signal();

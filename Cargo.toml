@@ -17,6 +17,8 @@ chrono = { version = "0.4", features = ["serde"] }
 futures = "0.3"
 serde-env-field = "0.4.0"
 serde = { version = "1.0.228", features = ["derive"] }
+toml = "0.9.8"
+temp-env = "0.3.6"
 
 [dev-dependencies]
 testcontainers = "0.16"

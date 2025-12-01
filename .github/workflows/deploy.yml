@@ -15,6 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e
+        with:
+          toolchain: stable
       - run: cargo test
   build:
     if: ${{ github.actor != 'dependabot[bot]' }}
@@ -26,6 +28,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e
+        with:
+          toolchain: stable
       - uses: actions/cache@v4
         continue-on-error: false
         with:

@@ -40,7 +40,7 @@ jobs:
       - name: build
         run: cargo build
       - name: docker-build-push
-        uses: nais/docker-build-push@v0
+        uses: nais/docker-build-push@791ebb6f74b82849c742a9bc9c97abe44c6c111f
         id: docker-build-push
         with:
           team: paw
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: nais/deploy/actions/deploy@v56e14061f2a8437bd9119e7b8f92749a3b288db1
+      - uses: nais/deploy/actions/deploy@56e14061f2a8437bd9119e7b8f92749a3b288db1
         env:
           CLUSTER: dev-gcp
           RESOURCE: nais/nais-dev.yaml

@@ -14,7 +14,7 @@ jobs:
       contents: "read"
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e
       - run: cargo test
   build:
     if: ${{ github.actor != 'dependabot[bot]' }}
@@ -25,7 +25,7 @@ jobs:
       id-token: "write"
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e
       - uses: actions/cache@v4
         continue-on-error: false
         with:
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: nais/deploy/actions/deploy@v2
+      - uses: nais/deploy/actions/deploy@v56e14061f2a8437bd9119e7b8f92749a3b288db1
         env:
           CLUSTER: dev-gcp
           RESOURCE: nais/nais-dev.yaml
@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: nais/deploy/actions/deploy@v2
+      - uses: nais/deploy/actions/deploy@56e14061f2a8437bd9119e7b8f92749a3b288db1
         env:
           CLUSTER: prod-gcp
           RESOURCE: nais/nais-prod.yaml

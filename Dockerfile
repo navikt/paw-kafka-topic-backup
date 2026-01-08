@@ -1,8 +1,9 @@
 FROM clux/muslrust:stable AS builder
 WORKDIR /build
+RUN cargo install cargo-auditable
 COPY . .
 ENV RUSTFLAGS='-C target-feature=+crt-static'
-RUN cargo build --target x86_64-unknown-linux-musl --release
+RUN cargo auditable build --target x86_64-unknown-linux-musl --release
 
 FROM cgr.dev/chainguard/static:latest
 WORKDIR /app
